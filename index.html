@@ -1,0 +1,3002 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flow AI — Aqlli ATM Bashorat Tizimi</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030C1A;
+  --bg2:#071428;
+  --bg3:#0A1E3D;
+  --card:#0D2040;
+  --card2:#0F2547;
+  --accent:#00E5C3;
+  --accent2:#0088FF;
+  --accent3:#FFB800;
+  --danger:#FF4B6E;
+  --warn:#FF8C00;
+  --text:#E8F4FF;
+  --text2:#7BA8D0;
+  --text3:#4A7BA8;
+  --border:#1A3A5C;
+  --border2:#234870;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+  --display:'Syne',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+
+/* ============ LOGIN ============ */
+#login-screen{
+  position:fixed;inset:0;z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
+}
+.login-bg{
+  position:absolute;inset:0;overflow:hidden;
+}
+.login-bg::before{
+  content:'';position:absolute;
+  width:600px;height:600px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,229,195,0.06) 0%,transparent 70%);
+  top:-100px;left:-100px;
+}
+.login-bg::after{
+  content:'';position:absolute;
+  width:500px;height:500px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,136,255,0.07) 0%,transparent 70%);
+  bottom:-50px;right:-50px;
+}
+.login-card{
+  position:relative;z-index:1;
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:20px;
+  padding:48px 40px;
+  width:420px;
+  max-width:95vw;
+}
+.login-logo{
+  display:flex;align-items:center;gap:12px;margin-bottom:36px;
+}
+.login-logo-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+}
+.login-logo-icon svg{width:24px;height:24px;fill:white}
+.login-logo-text{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:-0.3px}
+.login-logo-text span{color:var(--accent)}
+.login-title{font-family:var(--display);font-size:28px;font-weight:800;margin-bottom:6px;letter-spacing:-0.5px}
+.login-subtitle{color:var(--text2);font-size:14px;margin-bottom:32px}
+.form-group{margin-bottom:20px}
+.form-label{display:block;font-size:13px;color:var(--text2);margin-bottom:8px;font-weight:500;letter-spacing:0.3px;text-transform:uppercase}
+.form-input{
+  width:100%;padding:14px 16px;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:var(--text);
+  font-family:var(--sans);font-size:15px;
+  outline:none;transition:border-color 0.2s;
+}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text3)}
+.login-btn{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;border-radius:10px;
+  color:#000;font-family:var(--display);
+  font-size:16px;font-weight:700;
+  cursor:pointer;margin-top:8px;
+  transition:opacity 0.2s,transform 0.1s;
+  letter-spacing:0.2px;
+}
+.login-btn:hover{opacity:0.9}
+.login-btn:active{transform:scale(0.99)}
+.login-hint{text-align:center;margin-top:16px;font-size:13px;color:var(--text3)}
+.login-hint b{color:var(--accent);font-weight:500}
+.login-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,229,195,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,195,0.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+}
+
+/* ============ APP SHELL ============ */
+#app{display:none;height:100vh;flex-direction:column}
+.topbar{
+  height:62px;display:flex;align-items:center;
+  padding:0 24px;gap:16px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  position:relative;z-index:100;
+  flex-shrink:0;
+}
+.topbar-logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:16px}
+.topbar-logo-icon{
+  width:34px;height:34px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+}
+.topbar-logo-icon svg{width:18px;height:18px;fill:white}
+.topbar-logo span{color:var(--accent)}
+.topbar-sep{width:1px;height:30px;background:var(--border);margin:0 8px}
+.topbar-title{font-size:14px;color:var(--text2);font-weight:400}
+.topbar-spacer{flex:1}
+.topbar-badge{
+  background:rgba(0,229,195,0.1);border:1px solid rgba(0,229,195,0.3);
+  border-radius:20px;padding:5px 14px;
+  font-size:12px;color:var(--accent);
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);
+}
+.badge-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--accent);
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.topbar-nav{display:flex;gap:4px}
+.nav-btn{
+  background:none;border:none;
+  padding:8px 14px;border-radius:8px;
+  color:var(--text2);font-family:var(--sans);font-size:13px;
+  cursor:pointer;transition:all 0.15s;
+  display:flex;align-items:center;gap:6px;
+}
+.nav-btn:hover{background:var(--bg3);color:var(--text)}
+.nav-btn.active{background:rgba(0,229,195,0.1);color:var(--accent)}
+.nav-btn svg{width:15px;height:15px;fill:currentColor}
+.topbar-user{
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  padding:6px 10px;border-radius:8px;
+  border:1px solid var(--border);
+  transition:border-color 0.2s;
+}
+.topbar-user:hover{border-color:var(--border2)}
+.user-avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,#0088FF,#00E5C3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;color:white;
+}
+.user-name{font-size:13px;color:var(--text2)}
+.logout-btn{
+  background:none;border:1px solid var(--border);
+  border-radius:8px;padding:6px 12px;
+  color:var(--text2);font-size:13px;cursor:pointer;
+  transition:all 0.2s;
+}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+
+/* ============ MAIN LAYOUT ============ */
+.main-layout{display:flex;flex:1;overflow:hidden}
+.sidebar{
+  width:220px;flex-shrink:0;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.sidebar-section{padding:16px 12px 8px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:500}
+.sidebar-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;margin:1px 6px;
+  border-radius:8px;cursor:pointer;
+  font-size:13px;color:var(--text2);
+  transition:all 0.15s;position:relative;
+}
+.sidebar-item:hover{background:var(--bg3);color:var(--text)}
+.sidebar-item.active{background:rgba(0,229,195,0.1);color:var(--accent)}
+.sidebar-item.active::before{
+  content:'';position:absolute;left:0;top:20%;height:60%;
+  width:3px;background:var(--accent);border-radius:0 2px 2px 0;
+}
+.sidebar-item svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
+.sidebar-badge{
+  margin-left:auto;background:var(--danger);
+  color:white;font-size:11px;border-radius:10px;
+  padding:2px 7px;font-family:var(--mono);
+}
+.sidebar-footer{
+  margin-top:auto;padding:16px;
+  border-top:1px solid var(--border);
+}
+.sidebar-status{
+  font-size:12px;color:var(--text3);
+  display:flex;align-items:center;gap:8px;
+}
+
+/* ============ CONTENT PANELS ============ */
+.content{flex:1;overflow:auto;display:flex;flex-direction:column}
+
+/* Panel system */
+.panel{display:none;flex:1;overflow:auto}
+.panel.active{display:flex;flex-direction:column}
+
+/* ============ DASHBOARD ============ */
+.dash-header{
+  padding:20px 24px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.dash-title{font-family:var(--display);font-size:20px;font-weight:700}
+.dash-date{font-size:13px;color:var(--text3);font-family:var(--mono)}
+.stats-row{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:16px;padding:16px 24px;
+}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px;
+  position:relative;overflow:hidden;min-width:0;
+}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+}
+.stat-card.c-green::before{background:var(--accent)}
+.stat-card.c-blue::before{background:var(--accent2)}
+.stat-card.c-warn::before{background:var(--warn)}
+.stat-card.c-danger::before{background:var(--danger)}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;font-weight:500;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-val{font-family:var(--display);font-size:28px;font-weight:800;margin-bottom:5px;letter-spacing:-1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-val.c-green{color:var(--accent)}
+.stat-val.c-blue{color:var(--accent2)}
+.stat-val.c-warn{color:var(--warn)}
+.stat-val.c-danger{color:var(--danger)}
+.stat-sub{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.stat-change{
+  font-size:11px;padding:2px 8px;border-radius:20px;font-family:var(--mono);
+}
+.stat-change.up{background:rgba(0,229,195,0.1);color:var(--accent)}
+.stat-change.down{background:rgba(255,75,110,0.1);color:var(--danger)}
+
+.mid-section{
+  display:grid;grid-template-columns:1fr 340px;
+  gap:16px;padding:0 24px 16px;
+  flex:1;min-height:0;
+}
+
+/* MAP */
+.map-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.map-card-header{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-title svg{width:15px;height:15px;fill:var(--accent)}
+#map{flex:1;min-height:320px}
+.map-legend{
+  padding:10px 18px;border-top:1px solid var(--border);
+  display:flex;gap:16px;flex-wrap:wrap;
+}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+
+/* FORECAST PANEL */
+.forecast-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.forecast-card-header{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.chart-wrap{padding:16px;flex:1;position:relative;min-height:180px}
+#forecastChart{width:100%!important}
+
+.atm-alerts{padding:0 18px 14px}
+.alert-title{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.alert-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:8px;
+  margin-bottom:6px;font-size:13px;
+  background:rgba(255,75,110,0.07);
+  border:1px solid rgba(255,75,110,0.2);
+}
+.alert-item.warn{
+  background:rgba(255,140,0,0.07);
+  border-color:rgba(255,140,0,0.2);
+}
+.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.alert-dot.danger{background:var(--danger)}
+.alert-dot.warn{background:var(--warn)}
+.alert-text{flex:1}
+.alert-id{font-family:var(--mono);font-size:11px;color:var(--text3)}
+
+/* ============ ATM TABLE PANEL ============ */
+.panel-header{
+  padding:20px 24px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.filter-row{display:flex;gap:10px;align-items:center}
+.search-input{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:8px 14px;
+  color:var(--text);font-family:var(--sans);font-size:13px;
+  outline:none;width:240px;
+}
+.search-input:focus{border-color:var(--accent)}
+.filter-select{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:8px 14px;
+  color:var(--text);font-family:var(--sans);font-size:13px;
+  outline:none;cursor:pointer;
+}
+.table-wrap{padding:0 24px 24px;overflow-auto}
+.atm-table{width:100%;border-collapse:collapse;margin-top:16px}
+.atm-table th{
+  text-align:left;font-size:11px;color:var(--text3);
+  text-transform:uppercase;letter-spacing:0.8px;
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  font-weight:500;
+}
+.atm-table td{
+  padding:12px 14px;border-bottom:1px solid rgba(26,58,92,0.5);
+  font-size:13px;color:var(--text2);vertical-align:middle;
+}
+.atm-table tr:hover td{background:rgba(255,255,255,0.02)}
+.atm-id{font-family:var(--mono);color:var(--accent2);font-size:12px}
+.status-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;
+}
+.status-pill.ok{background:rgba(0,229,195,0.1);color:var(--accent)}
+.status-pill.warn{background:rgba(255,140,0,0.1);color:var(--warn)}
+.status-pill.danger{background:rgba(255,75,110,0.1);color:var(--danger)}
+.status-pill.offline{background:rgba(74,123,168,0.15);color:var(--text3)}
+.progress-bar{height:6px;border-radius:3px;background:var(--bg3);width:100px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.3s}
+.action-btn{
+  background:none;border:1px solid var(--border);
+  border-radius:6px;padding:5px 10px;
+  color:var(--text2);font-size:12px;cursor:pointer;
+  transition:all 0.15s;
+}
+.action-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+
+/* ============ MAP PANEL (full) ============ */
+#map-full{height:100%}
+
+/* Leaflet custom markers */
+.atm-marker{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:white;
+  border:2px solid rgba(255,255,255,0.3);
+  box-shadow:0 2px 8px rgba(0,0,0,0.4);
+}
+.atm-marker.ok{background:#00C4A3}
+.atm-marker.warn{background:#FF8C00}
+.atm-marker.danger{background:#FF4B6E}
+.atm-marker.offline{background:#4A7BA8}
+
+/* Tooltip */
+.leaflet-popup-content-wrapper{
+  background:var(--card)!important;
+  border:1px solid var(--border2)!important;
+  border-radius:10px!important;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5)!important;
+  color:var(--text)!important;
+}
+.leaflet-popup-content{color:var(--text)!important;font-family:'DM Sans',sans-serif!important}
+.leaflet-popup-tip{background:var(--card)!important}
+.popup-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px}
+.popup-id{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#0088FF}
+.popup-name{font-size:14px;font-weight:600;color:#E8F4FF}
+.popup-row{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px}
+.popup-label{color:#7BA8D0}
+.popup-val{font-weight:500;color:#E8F4FF}
+.popup-cash-bar{height:5px;border-radius:3px;background:#0A1E3D;margin-top:8px;overflow:hidden}
+.popup-cash-fill{height:100%;border-radius:3px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+
+/* ============ AI CHAT ============ */
+.chat-fab{
+  position:fixed;bottom:28px;right:28px;z-index:2000;
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(0,229,195,0.35);
+  transition:transform .2s,box-shadow .2s;
+}
+.chat-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(0,229,195,0.5)}
+.chat-fab svg{width:26px;height:26px;fill:white}
+.chat-unread{
+  position:absolute;top:0;right:0;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--danger);
+  border:2px solid var(--bg);
+  font-size:10px;font-weight:700;color:white;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);
+}
+
+.chat-panel{
+  position:fixed;bottom:0;right:0;z-index:1999;
+  width:400px;height:100vh;
+  background:var(--bg2);
+  border-left:1px solid var(--border2);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:-8px 0 32px rgba(0,0,0,.4);
+}
+.chat-panel.open{transform:translateX(0)}
+
+.chat-header{
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  background:var(--bg3);flex-shrink:0;
+}
+.chat-avatar{
+  width:38px;height:38px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+}
+.chat-avatar svg{width:20px;height:20px;fill:white}
+.chat-header-info{flex:1}
+.chat-header-name{font-family:var(--display);font-size:14px;font-weight:700}
+.chat-header-status{font-size:11px;color:var(--accent);display:flex;align-items:center;gap:5px}
+.chat-close{
+  background:none;border:1px solid var(--border);
+  border-radius:8px;padding:6px 10px;
+  color:var(--text2);cursor:pointer;font-size:18px;line-height:1;
+  transition:all .15s;
+}
+.chat-close:hover{border-color:var(--danger);color:var(--danger)}
+
+.chat-suggestions{
+  padding:12px 14px;border-bottom:1px solid var(--border);
+  display:flex;gap:6px;overflow-x:auto;flex-shrink:0;
+}
+.chat-suggestions::-webkit-scrollbar{height:0}
+.sugg-btn{
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:20px;padding:6px 13px;
+  color:var(--text2);font-size:12px;white-space:nowrap;
+  cursor:pointer;transition:all .15s;font-family:var(--sans);
+}
+.sugg-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,229,195,0.06)}
+
+.chat-messages{
+  flex:1;overflow-y:auto;
+  padding:16px 14px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.chat-msg{display:flex;gap:10px;align-items:flex-start;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg.user{flex-direction:row-reverse}
+.msg-avatar{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;
+}
+.msg-avatar.ai{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.msg-avatar.ai svg{width:16px;height:16px;fill:white}
+.msg-avatar.user{background:var(--bg3);border:1px solid var(--border2);color:var(--accent);font-weight:600;font-family:var(--mono)}
+.msg-bubble{
+  max-width:82%;padding:11px 14px;border-radius:14px;
+  font-size:13px;line-height:1.65;color:var(--text);
+}
+.msg-bubble.ai{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:4px 14px 14px 14px;
+}
+.msg-bubble.user{
+  background:linear-gradient(135deg,rgba(0,229,195,.15),rgba(0,136,255,.1));
+  border:1px solid rgba(0,229,195,.2);
+  border-radius:14px 4px 14px 14px;
+  text-align:right;
+}
+.msg-time{font-size:10px;color:var(--text3);margin-top:5px;font-family:var(--mono)}
+.msg-bubble.ai .msg-time{text-align:left}
+.msg-bubble.user .msg-time{text-align:right}
+
+.typing-dots{display:flex;gap:4px;align-items:center;padding:4px 0}
+.typing-dots span{
+  width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.4;
+  animation:typeDot 1.2s ease-in-out infinite;
+}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes typeDot{0%,60%,100%{opacity:.2;transform:scale(.8)}30%{opacity:1;transform:scale(1.2)}}
+
+.chat-input-area{
+  padding:14px;border-top:1px solid var(--border);
+  background:var(--bg3);flex-shrink:0;
+}
+.chat-input-wrap{
+  display:flex;gap:8px;align-items:flex-end;
+  background:var(--bg);border:1px solid var(--border2);
+  border-radius:14px;padding:8px 10px;
+  transition:border-color .2s;
+}
+.chat-input-wrap:focus-within{border-color:var(--accent)}
+.chat-textarea{
+  flex:1;background:none;border:none;outline:none;
+  color:var(--text);font-family:var(--sans);font-size:13px;
+  resize:none;min-height:20px;max-height:120px;line-height:1.5;
+}
+.chat-textarea::placeholder{color:var(--text3)}
+.chat-send{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .15s,transform .1s;
+}
+.chat-send:hover{opacity:.85}
+.chat-send:active{transform:scale(.93)}
+.chat-send:disabled{opacity:.3;cursor:not-allowed}
+.chat-send svg{width:16px;height:16px;fill:white}
+.chat-footer{font-size:11px;color:var(--text3);text-align:center;margin-top:8px}
+.chat-footer span{color:var(--accent)}
+
+/* AI panel */
+.ai-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;margin:0 24px 24px;
+}
+.ai-header{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.ai-icon{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center}
+.ai-icon svg{width:14px;height:14px;fill:white}
+.ai-body{padding:14px 18px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ai-insight{
+  background:var(--bg3);border-radius:10px;padding:12px 14px;
+  border:1px solid var(--border);min-width:0;
+  display:flex;flex-direction:column;
+}
+.ai-insight-title{font-size:11px;color:var(--accent);font-weight:500;margin-bottom:5px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.ai-insight-text{font-size:12px;color:var(--text2);line-height:1.6;word-break:break-word;overflow-wrap:break-word}
+.ai-insight-num{font-family:var(--mono);font-size:18px;color:var(--text);font-weight:500;margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ── Sozlamalar ── */
+.soz-group{display:flex;flex-direction:column;gap:8px}
+.soz-label{font-size:12px;color:var(--text2);font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+.soz-row{display:flex;align-items:center;gap:12px}
+.soz-range{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--border2);outline:none;cursor:pointer}
+.soz-range::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer}
+.soz-val{font-family:var(--mono);font-size:13px;font-weight:600;min-width:54px;text-align:right;color:var(--text)}
+.soz-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.toggle{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:24px;cursor:pointer;transition:.3s}
+.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--text3);border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider{background:var(--accent)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(20px);background:white}
+.user-row{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--border)}
+.user-row:last-child{border:none}
+.user-av{width:34px;height:34px;border-radius:50%;background:rgba(0,229,195,0.15);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;font-family:var(--mono);flex-shrink:0}
+.user-info{flex:1}
+.user-name-t{font-size:13px;font-weight:500;color:var(--text)}
+.user-email{font-size:11px;color:var(--text3)}
+.sys-row{display:flex;align-items:center;justify-content:space-between;padding:2px 0}
+
+/* ── ATM Analytics Panel (dashboard map) ── */
+.ap-tab{
+  flex:1;padding:8px 4px;background:none;border:none;
+  color:var(--text3);font-size:11px;font-family:var(--sans);
+  cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .15s;white-space:nowrap;
+}
+.ap-tab:hover{color:var(--text2)}
+.ap-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── ATM Detail Modal ── */
+.atm-modal-overlay{
+  display:none;position:fixed;inset:0;z-index:3000;
+  background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);
+  align-items:flex-end;justify-content:center;
+}
+.atm-modal-overlay.open{display:flex}
+.atm-modal{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:20px 20px 0 0;width:100%;max-width:700px;
+  max-height:92vh;overflow-y:auto;
+  animation:slideUp .3s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:40px;height:4px;border-radius:2px;background:var(--border2);margin:12px auto 0}
+.modal-header{
+  padding:14px 20px 12px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.modal-status-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.modal-title{font-family:var(--display);font-size:18px;font-weight:700;flex:1}
+.modal-id{font-family:var(--mono);font-size:12px;color:var(--text3)}
+.modal-close{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text2);cursor:pointer;font-size:16px;line-height:1;transition:.15s}
+.modal-close:hover{border-color:var(--danger);color:var(--danger)}
+
+.modal-body{padding:16px 20px}
+.modal-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.modal-stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center}
+.modal-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px}
+.modal-stat-val{font-family:var(--display);font-size:22px;font-weight:700}
+
+.modal-minimap{height:200px;border-radius:12px;overflow:hidden;margin-bottom:14px;border:1px solid var(--border)}
+
+.modal-nav-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;font-weight:500;margin-bottom:10px}
+.modal-nav-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.modal-nav-btn{
+  padding:13px 16px;border-radius:12px;border:none;cursor:pointer;
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--sans);font-size:14px;font-weight:600;
+  transition:all .15s;text-decoration:none;
+}
+.modal-nav-btn:hover{opacity:.88;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.modal-nav-btn:active{transform:scale(.97)}
+.modal-nav-btn.google{background:#1A73E8;color:white}
+.modal-nav-btn.yandex{background:#FC3F1D;color:white}
+.modal-nav-btn svg{width:20px;height:20px;fill:currentColor;flex-shrink:0}
+.modal-nav-btn-sub{font-size:11px;opacity:.8;font-weight:400}
+.modal-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-info-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.modal-info-card-label{font-size:11px;color:var(--text3);margin-bottom:4px}
+.modal-info-card-val{font-size:14px;font-weight:500;color:var(--text)}
+
+/* ══════════════════════════════════════
+   MOBILE BOTTOM NAV
+══════════════════════════════════════ */
+.mobile-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;z-index:700;
+  background:var(--bg2);border-top:1px solid var(--border);
+  height:60px;align-items:center;justify-content:space-around;
+  box-shadow:0 -4px 20px rgba(0,0,0,.4);
+  padding:0 4px;
+}
+.mob-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 10px;border-radius:10px;border:none;
+  background:none;color:var(--text3);cursor:pointer;
+  font-family:var(--sans);font-size:9px;font-weight:500;
+  transition:.15s;position:relative;flex:1;max-width:70px;
+}
+.mob-btn svg{width:22px;height:22px;fill:currentColor}
+.mob-btn.active{color:var(--accent)}
+.mob-btn.active svg{fill:var(--accent)}
+.mob-btn-badge{
+  position:absolute;top:2px;right:6px;
+  width:15px;height:15px;border-radius:50%;
+  background:var(--danger);color:white;font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* Sidebar overlay */
+.mob-overlay{
+  display:none;position:fixed;inset:0;z-index:590;
+  background:rgba(0,0,0,.6);
+}
+.mob-overlay.show{display:block}
+
+/* ══════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+══════════════════════════════════════ */
+@media(max-width:768px){
+
+  /* App shell */
+  #app{height:100vh;height:100dvh}
+
+  /* ── Topbar ── */
+  .topbar{
+    padding:0 14px;height:52px;gap:8px;
+    position:sticky;top:0;z-index:500;
+  }
+  .topbar-sep,.topbar-title,.topbar-badge,.topbar-nav{display:none}
+  .topbar-spacer{flex:1}
+  .user-name{display:none}
+  .logout-btn{padding:5px 10px;font-size:12px}
+  .topbar-logo{font-size:14px;gap:8px}
+  .topbar-logo-icon{width:30px;height:30px}
+
+  /* Hamburger */
+  .mob-menu-btn{
+    display:flex;align-items:center;justify-content:center;
+    width:36px;height:36px;border-radius:9px;
+    background:var(--bg3);border:1px solid var(--border);
+    cursor:pointer;flex-shrink:0;
+  }
+  .mob-menu-btn svg{width:18px;height:18px;fill:var(--text2)}
+
+  /* ── Sidebar ── */
+  .main-layout{flex-direction:column;overflow:hidden}
+  .sidebar{
+    position:fixed;top:52px;left:0;bottom:60px;
+    z-index:595;width:240px;
+    transform:translateX(-100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);
+  }
+  .sidebar.open{transform:translateX(0)}
+
+  /* ── Content ── */
+  .content{overflow-y:auto;padding-bottom:60px}
+
+  /* ── Mobile nav show ── */
+  .mobile-nav{display:flex}
+
+  /* ── Dashboard ── */
+  .dash-header{padding:12px 14px 10px;flex-wrap:wrap;gap:4px}
+  .dash-title{font-size:15px}
+  .dash-date{font-size:10px;display:none}
+
+  /* Stats — 2 col */
+  .stats-row{
+    grid-template-columns:1fr 1fr;
+    gap:8px;padding:10px 12px;
+  }
+  .stat-card{padding:12px 14px}
+  .stat-val{font-size:22px}
+  .stat-label{font-size:10px;letter-spacing:0}
+
+  /* Mid section stack */
+  .mid-section{
+    grid-template-columns:1fr;
+    padding:0 12px 12px;gap:10px;
+  }
+
+  /* Map */
+  #map{min-height:240px !important}
+
+  /* Analytics panel → bottom sheet */
+  #atm-analytics-panel{
+    position:fixed !important;
+    bottom:60px !important;left:0;right:0;
+    width:100% !important;
+    max-height:50vh;
+    border-left:none !important;
+    border-top:1px solid var(--border2);
+    border-radius:18px 18px 0 0;
+    overflow-y:auto;
+  }
+  #atm-analytics-panel[style*="width: 280px"],
+  #atm-analytics-panel[style*="width:280px"]{
+    width:100% !important;
+  }
+
+  /* AI insights 2 col */
+  .ai-body{grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px}
+  .ai-insight{padding:9px 11px}
+  .ai-insight-num{font-size:15px}
+  .ai-insight-text{font-size:11px}
+  .ai-card{margin:0 12px 14px}
+
+  /* ── Map full panel ── */
+  #map-full{height:calc(100vh - 52px - 60px) !important}
+
+  /* ── ATM Table ── */
+  .panel-header{padding:12px 14px;flex-direction:column;align-items:flex-start;gap:8px}
+  .filter-row{flex-wrap:wrap;gap:6px;width:100%}
+  .search-input{width:100%;min-width:0}
+  .table-wrap{padding:0 10px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .atm-table{font-size:11px;min-width:580px}
+  .atm-table th{padding:7px 8px;font-size:10px}
+  .atm-table td{padding:8px 8px}
+
+  /* ── ATM Detail Modal ── */
+  .modal-stats{grid-template-columns:1fr 1fr}
+  .modal-minimap{height:150px}
+  .modal-body{padding:12px 14px}
+  .modal-stat-val{font-size:18px}
+
+  /* ── Chat panel ── */
+  .chat-panel{
+    width:100% !important;
+    border-left:none;
+    top:52px;
+  }
+  .chat-fab{bottom:72px;right:14px;width:48px;height:48px}
+  .chat-fab svg{width:22px;height:22px}
+  .chat-unread{width:16px;height:16px;font-size:9px}
+
+  /* ── Panels padding ── */
+  #bashorat-panel,#hisobot-panel,#alerts-panel,#sozlamalar-panel{
+    padding-bottom:10px;
+  }
+  /* Bashorat 2 col */
+  #bashorat-panel .stats-row{grid-template-columns:1fr 1fr;padding:10px 12px}
+  /* Bashorat charts stack */
+  #bashorat-panel .mid-section-2col{grid-template-columns:1fr !important}
+
+  /* Sozlamalar stack */
+  #sozlamalar-panel > div:last-of-type{
+    padding:0 12px 20px !important;
+    grid-template-columns:1fr !important;
+  }
+
+  /* Hisobot */
+  #hisobot-panel .stats-row{grid-template-columns:1fr 1fr;padding:10px 12px}
+  .rpt-charts-grid{grid-template-columns:1fr !important}
+
+  /* Alerts */
+  #alerts-panel .stats-row{grid-template-columns:1fr 1fr;padding:10px 12px}
+  #alerts-list{padding:0 12px 16px !important}
+}
+
+@media(max-width:400px){
+  .stats-row{gap:7px;padding:8px 10px}
+  .ai-body{grid-template-columns:1fr}
+  .modal-nav-btns{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-bg">
+    <div class="login-grid"></div>
+  </div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 10h18v2H3v-2zm2-4h14v2H5V6zm4 8h6v2H9v-2zM1 14h22v8H1v-8zM12 2L4 6h16L12 2z"/></svg>
+      </div>
+      <div class="login-logo-text">ALGO<span style="color:var(--accent)">RX</span></div>
+    </div>
+    <div class="login-title">Xush kelibsiz</div>
+    <div class="login-subtitle">Aqlli ATM boshqaruv tizimiga kiring</div>
+
+    <div class="form-group">
+      <label class="form-label">Foydalanuvchi nomi</label>
+      <input class="form-input" type="text" placeholder="admin@bank.uz" id="login-user" value="admin@bank.uz">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Parol</label>
+      <input class="form-input" type="password" placeholder="••••••••" id="login-pass" value="12345678">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Kirish →</button>
+    <div class="login-hint">Demo: <b>admin@bank.uz</b> / <b>12345678</b></div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <!-- Hamburger (mobile only) -->
+    <button class="mob-menu-btn" onclick="toggleSidebar()" style="display:none" id="mob-menu">
+      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+    <div class="topbar-logo">
+      <div class="topbar-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 10h18v2H3v-2zm2-4h14v2H5V6zm4 8h6v2H9v-2zM1 14h22v8H1v-8zM12 2L4 6h16L12 2z"/></svg>
+      </div>
+      Flow<span style="color:var(--accent)">AI</span>
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-title">O'zbekiston Respublikasi · ATM Monitoring</div>
+
+    <div class="topbar-spacer"></div>
+
+    <div class="topbar-badge">
+      <div class="badge-dot"></div>
+      JONLI MONITORING
+    </div>
+
+    <div class="topbar-nav">
+      <button class="nav-btn active" onclick="showPanel('dashboard',this)">
+        <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 4h2v-2h-2v2zm0-4h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2z"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-btn" onclick="showPanel('map-panel',this)">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Xarita
+      </button>
+      <button class="nav-btn" onclick="showPanel('atm-list',this)">
+        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+        ATM Ro'yxati
+      </button>
+    </div>
+
+    <div class="topbar-sep"></div>
+    <div class="topbar-user">
+      <div class="user-avatar">AD</div>
+      <span class="user-name">Admin</span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Chiqish</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">Monitoring</div>
+      <div class="sidebar-item active" onclick="showPanel('dashboard',null);setActive(this)">
+        <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 4h2v-2h-2v2zm0-4h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2z"/></svg>
+        Dashboard
+      </div>
+      <div class="sidebar-item" onclick="showPanel('map-panel',null);setActive(this)">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Xarita
+      </div>
+      <div class="sidebar-item" onclick="showPanel('atm-list',null);setActive(this)">
+        <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+        ATM Ro'yxati
+        <span class="sidebar-badge">3</span>
+      </div>
+
+      <div class="sidebar-section">Tahlil</div>
+      <div class="sidebar-item" onclick="showPanel('bashorat-panel',null);setActive(this)">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+        Bashorat
+      </div>
+      <div class="sidebar-item" onclick="showPanel('hisobot-panel',null);setActive(this)">
+        <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+        Hisobotlar
+      </div>
+      <div class="sidebar-item" onclick="showPanel('alerts-panel',null);setActive(this)">
+        <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 15l-1-1V12h2v4l-1 1zm0-6h-2V9h2v2z"/></svg>
+        Ogohlantirishlar
+        <span class="sidebar-badge">5</span>
+      </div>
+
+      <div class="sidebar-section">Tizim</div>
+      <div class="sidebar-item" onclick="showPanel('sozlamalar-panel',null);setActive(this)">
+        <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 018.5 12 3.5 3.5 0 0112 8.5a3.5 3.5 0 013.5 3.5 3.5 3.5 0 01-3.5 3.5m7.43-2.92c.04-.34.07-.68.07-1.08s-.03-.74-.07-1.08l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.63c-.04.34-.07.69-.07 1.08s.03.74.07 1.08l-2.11 1.63c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.23.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63z"/></svg>
+        Sozlamalar
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-status">
+          <div class="badge-dot"></div>
+          Tizim ishlayapti
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- DASHBOARD PANEL -->
+      <div class="panel active" id="dashboard">
+        <div class="dash-header">
+          <div class="dash-title">Bosh panel</div>
+          <div class="dash-date" id="cur-date"></div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card c-green">
+            <div class="stat-label">Jami ATMlar</div>
+            <div class="stat-val c-green">247</div>
+            <div class="stat-sub"><span class="stat-change up">▲ +3</span> bu oy</div>
+          </div>
+          <div class="stat-card c-blue">
+            <div class="stat-label">Faol ATMlar</div>
+            <div class="stat-val c-blue">231</div>
+            <div class="stat-sub"><span class="stat-change up">93.5%</span> faollik</div>
+          </div>
+          <div class="stat-card c-warn">
+            <div class="stat-label">Qo'shimcha naqd kerak</div>
+            <div class="stat-val c-warn">18</div>
+            <div class="stat-sub"><span class="stat-change down">▼ kritik</span> 48 soatda</div>
+          </div>
+          <div class="stat-card c-danger">
+            <div class="stat-label">Naqd pul tugagan</div>
+            <div class="stat-val c-danger">3</div>
+            <div class="stat-sub"><span class="stat-change down">▼ xizmat off</span></div>
+          </div>
+        </div>
+
+        <div class="mid-section">
+          <!-- MAP + ATM ANALYTICS PANEL -->
+          <div class="map-card" style="position:relative;overflow:hidden">
+            <div class="map-card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                ATM Xaritasi — Toshkent
+              </div>
+              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">🖱 ATM bosing → bashorat ko'ring</span>
+            </div>
+
+            <!-- Map + sliding panel container -->
+            <div style="position:relative;flex:1;display:flex;overflow:hidden;min-height:320px">
+              <div id="map" style="flex:1;transition:flex .35s ease"></div>
+
+              <!-- ATM Analytics Slide Panel -->
+              <div id="atm-analytics-panel" style="
+                width:0;overflow:hidden;
+                background:var(--bg2);border-left:1px solid var(--border2);
+                display:flex;flex-direction:column;
+                transition:width .35s cubic-bezier(.4,0,.2,1);
+                flex-shrink:0;position:relative;
+              ">
+                <!-- Panel header -->
+                <div id="ap-header" style="padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+                    <div id="ap-dot" style="width:9px;height:9px;border-radius:50%;background:var(--accent)"></div>
+                    <span id="ap-id" style="font-family:var(--mono);font-size:11px;color:var(--text3)"></span>
+                    <span id="ap-badge" style="margin-left:auto"></span>
+                    <button onclick="closeAnalyticsPanel()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:0 0 0 6px">×</button>
+                  </div>
+                  <div id="ap-name" style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+                </div>
+
+                <!-- Cash level bar -->
+                <div style="padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                    <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Naqd daraja</span>
+                    <span id="ap-cash-pct" style="font-family:var(--mono);font-size:16px;font-weight:700"></span>
+                  </div>
+                  <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+                    <div id="ap-cash-bar" style="height:100%;border-radius:3px;transition:width .5s"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-top:5px">
+                    <span style="font-size:10px;color:var(--text3)">Qoldiq: <span id="ap-balance" style="color:var(--text2)"></span></span>
+                    <span style="font-size:10px;color:var(--text3)">Bashorat: <span id="ap-forecast" style="font-weight:600"></span></span>
+                  </div>
+                </div>
+
+                <!-- Tabs -->
+                <div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0">
+                  <button class="ap-tab active" id="tab-forecast" onclick="switchTab('forecast')">📈 Bashorat</button>
+                  <button class="ap-tab" id="tab-weekly" onclick="switchTab('weekly')">📅 Haftalik</button>
+                  <button class="ap-tab" id="tab-hourly" onclick="switchTab('hourly')">🕐 Soatlik</button>
+                </div>
+
+                <!-- Chart area -->
+                <div style="flex:1;padding:10px;overflow-y:auto;min-width:260px" id="ap-chart-area">
+                  <!-- Forecast tab -->
+                  <div id="tab-content-forecast">
+                    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px">7 kunlik naqd pul bashorati</div>
+                    <canvas id="ap-forecast-chart" height="100"></canvas>
+                    <div id="ap-forecast-alert" style="margin-top:8px;padding:7px 10px;border-radius:7px;font-size:11px;display:none"></div>
+                  </div>
+                  <!-- Weekly tab -->
+                  <div id="tab-content-weekly" style="display:none">
+                    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px">Hafta kunlari bo'yicha tranzaksiyalar</div>
+                    <canvas id="ap-weekly-chart" height="100"></canvas>
+                    <div id="ap-peak-day" style="margin-top:8px;padding:7px 10px;background:rgba(0,229,195,0.07);border:1px solid rgba(0,229,195,.2);border-radius:7px;font-size:11px;color:var(--text2)"></div>
+                  </div>
+                  <!-- Hourly tab -->
+                  <div id="tab-content-hourly" style="display:none">
+                    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px">Kun davomida yuklanish (soatlar)</div>
+                    <canvas id="ap-hourly-chart" height="110"></canvas>
+                    <div id="ap-peak-hour" style="margin-top:8px;padding:7px 10px;background:rgba(0,136,255,0.07);border:1px solid rgba(0,136,255,.2);border-radius:7px;font-size:11px;color:var(--text2)"></div>
+                  </div>
+                </div>
+
+                <!-- Inkassatsiya tavsiya -->
+                <div style="padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg3)" id="ap-recommendation"></div>
+              </div>
+            </div>
+
+            <div class="map-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#00C4A3"></div>Yetarli naqd</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#FF8C00"></div>Kam naqd</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#FF4B6E"></div>Kritik / Tugagan</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#4A7BA8"></div>Oflayn</div>
+            </div>
+          </div>
+
+          <!-- RIGHT: FORECAST + ALERTS -->
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="forecast-card">
+              <div class="forecast-card-header">
+                <div class="card-title">
+                  <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+                  7 Kunlik Bashorat
+                </div>
+                <span style="font-size:11px;color:var(--accent);background:rgba(0,229,195,0.1);padding:3px 8px;border-radius:20px;font-family:var(--mono)">AI</span>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="forecastChart"></canvas>
+              </div>
+            </div>
+
+            <div class="forecast-card">
+              <div class="forecast-card-header">
+                <div class="card-title" style="color:var(--danger)">
+                  <svg viewBox="0 0 24 24" style="fill:var(--danger)"><path d="M12 2L1 21h22L12 2zm0 3.5l8.5 15.5H3.5L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+                  Ogohlantirishlar
+                </div>
+                <span style="font-size:11px;color:var(--danger)">5 ta faol</span>
+              </div>
+              <div class="atm-alerts">
+                <div class="alert-item" onclick="openATMDetail('ATM-003')" style="cursor:pointer">
+                  <div class="alert-dot danger"></div>
+                  <div class="alert-text">Naqd pul tugadi</div>
+                  <div class="alert-id" style="display:flex;align-items:center;gap:6px">ATM-003 <span style="font-size:10px;color:var(--accent2)">📍</span></div>
+                </div>
+                <div class="alert-item" onclick="openATMDetail('ATM-005')" style="cursor:pointer">
+                  <div class="alert-dot danger"></div>
+                  <div class="alert-text">Naqd pul kritik — 12%</div>
+                  <div class="alert-id" style="display:flex;align-items:center;gap:6px">ATM-005 <span style="font-size:10px;color:var(--accent2)">📍</span></div>
+                </div>
+                <div class="alert-item warn" onclick="openATMDetail('ATM-002')" style="cursor:pointer">
+                  <div class="alert-dot warn"></div>
+                  <div class="alert-text">Naqd kam — 34%</div>
+                  <div class="alert-id" style="display:flex;align-items:center;gap:6px">ATM-002 <span style="font-size:10px;color:var(--accent2)">📍</span></div>
+                </div>
+                <div class="alert-item warn" onclick="openATMDetail('ATM-009')" style="cursor:pointer">
+                  <div class="alert-dot warn"></div>
+                  <div class="alert-text">18 soatda tugaydi</div>
+                  <div class="alert-id" style="display:flex;align-items:center;gap:6px">ATM-009 <span style="font-size:10px;color:var(--accent2)">📍</span></div>
+                </div>
+                <div class="alert-item warn" onclick="openATMDetail('ATM-007')" style="cursor:pointer">
+                  <div class="alert-dot warn"></div>
+                  <div class="alert-text">Aloqa uzildi — Oflayn</div>
+                  <div class="alert-id" style="display:flex;align-items:center;gap:6px">ATM-007 <span style="font-size:10px;color:var(--accent2)">📍</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI INSIGHTS -->
+        <div class="ai-card">
+          <div class="ai-header">
+            <div class="ai-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.38-1 1.72V7h1a7 7 0 017 7h1v2h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2v-2h1a7 7 0 017-7h1V5.72c-.6-.34-1-.98-1-1.72a2 2 0 012-2M7.5 13A2.5 2.5 0 005 15.5 2.5 2.5 0 007.5 18a2.5 2.5 0 002.5-2.5A2.5 2.5 0 007.5 13m9 0a2.5 2.5 0 00-2.5 2.5 2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5-2.5A2.5 2.5 0 0016.5 13z"/></svg>
+            </div>
+            <span style="font-size:14px;font-weight:600">AI Tahlili va Tavsiyalar</span>
+            <span style="margin-left:auto;font-size:12px;color:var(--text3);font-family:var(--mono)">claude-sonnet-4 · Yangilandi: hozir</span>
+          </div>
+          <div class="ai-body">
+            <div class="ai-insight">
+              <div class="ai-insight-title">📊 Bugungi talab</div>
+              <div class="ai-insight-num">₩ 4.2 mlrd</div>
+              <div class="ai-insight-text">Toshkent ATMlarida bugungi naqd pul talabi. Juma va dam olish kunlarida 23% oshishi kutilmoqda.</div>
+            </div>
+            <div class="ai-insight">
+              <div class="ai-insight-title">🔮 Bashorat (48 soat)</div>
+              <div class="ai-insight-num">18 ATM</div>
+              <div class="ai-insight-text">Kelasi 48 soat ichida 18 ta ATMda naqd pul tugashi ehtimoli yuqori. Inkassatsiya rejasini yangilash tavsiya etiladi.</div>
+            </div>
+            <div class="ai-insight">
+              <div class="ai-insight-title">🛣️ Optimal marshrut</div>
+              <div class="ai-insight-num">3 mashina</div>
+              <div class="ai-insight-text">Bugungi inkassatsiya uchun 3 ta mashina optimal. Chorsu → Yunusobod → Mirzo Ulug'bek tartibi tavsiya etiladi.</div>
+            </div>
+            <div class="ai-insight">
+              <div class="ai-insight-title">💡 Tejash imkoniyati</div>
+              <div class="ai-insight-num">₩ 840 mln</div>
+              <div class="ai-insight-text">AI bashorati asosida inkassatsiya optimallashtirilsa, oylik xarajatlar 840 million so'mga kamayishi mumkin.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP PANEL (FULL) -->
+      <div class="panel" id="map-panel" style="position:relative">
+        <div style="position:absolute;top:16px;left:16px;z-index:1000;background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:12px 16px;display:flex;gap:16px">
+          <div class="legend-item"><div class="legend-dot" style="background:#00C4A3"></div>Yetarli</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#FF8C00"></div>Kam</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#FF4B6E"></div>Kritik</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4A7BA8"></div>Oflayn</div>
+        </div>
+        <div id="map-full"></div>
+      </div>
+
+      <!-- ATM LIST PANEL -->
+      <div class="panel" id="atm-list">
+        <div class="panel-header">
+          <div class="dash-title">ATM Ro'yxati</div>
+          <div class="filter-row">
+            <input class="search-input" placeholder="ATM ID yoki manzil qidiring..." oninput="filterATMs(this.value)" id="search-input">
+            <select class="filter-select" onchange="filterByStatus(this.value)" id="status-filter">
+              <option value="all">Barchasi</option>
+              <option value="ok">Yetarli</option>
+              <option value="warn">Kam naqd</option>
+              <option value="danger">Kritik</option>
+              <option value="offline">Oflayn</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="atm-table" id="atm-table">
+            <thead>
+              <tr>
+                <th>ATM ID</th>
+                <th>Nomi / Manzil</th>
+                <th>Holat</th>
+                <th>Naqd daraja</th>
+                <th>Qoldiq (mln so'm)</th>
+                <th>Oxirgi inkassatsiya</th>
+                <th>Bashorat</th>
+                <th>Harakat</th>
+              </tr>
+            </thead>
+            <tbody id="atm-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           BASHORAT PANEL
+      ══════════════════════════════════ -->
+      <div class="panel" id="bashorat-panel">
+        <div class="panel-header">
+          <div class="dash-title">AI Bashorat Tizimi</div>
+          <div class="filter-row">
+            <select class="filter-select" id="forecast-atm-select" onchange="renderForecast()">
+              <option value="all">Barcha ATMlar (umumiy)</option>
+            </select>
+            <select class="filter-select" id="forecast-days-select" onchange="renderForecast()">
+              <option value="7">7 kunlik</option>
+              <option value="14">14 kunlik</option>
+              <option value="30">30 kunlik</option>
+            </select>
+            <button class="action-btn" style="padding:8px 18px;background:rgba(0,229,195,0.1);border-color:var(--accent);color:var(--accent)" onclick="genAiForecast()">🤖 AI Tahlil</button>
+          </div>
+        </div>
+
+        <div style="padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px">
+          <div class="stat-card c-blue">
+            <div class="stat-label">O'rtacha naqd daraja</div>
+            <div class="stat-val c-blue" id="fc-avg">58%</div>
+            <div class="stat-sub">barcha ATMlar</div>
+          </div>
+          <div class="stat-card c-warn">
+            <div class="stat-label">7 kun ichida tugaydi</div>
+            <div class="stat-val c-warn" id="fc-risk">6</div>
+            <div class="stat-sub">ATM · bashorat</div>
+          </div>
+          <div class="stat-card c-green">
+            <div class="stat-label">Optimal inkassatsiya</div>
+            <div class="stat-val c-green">3</div>
+            <div class="stat-sub">ta marshrut</div>
+          </div>
+          <div class="stat-card c-danger">
+            <div class="stat-label">Talab o'sishi</div>
+            <div class="stat-val c-danger">+18%</div>
+            <div class="stat-sub">dam olish kunlari</div>
+          </div>
+        </div>
+
+        <div style="padding:0 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div class="map-card">
+            <div class="map-card-header">
+              <div class="card-title"><svg viewBox="0 0 24 24" style="fill:var(--accent);width:15px;height:15px"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>Naqd talab bashorati</div>
+              <span style="font-size:11px;color:var(--accent);background:rgba(0,229,195,0.1);padding:3px 8px;border-radius:20px">AI</span>
+            </div>
+            <div style="padding:16px"><canvas id="fc-main-chart" height="180"></canvas></div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-header">
+              <div class="card-title"><svg viewBox="0 0 24 24" style="fill:var(--warn);width:15px;height:15px"><path d="M12 2L1 21h22L12 2z"/></svg>ATM risk darajasi</div>
+            </div>
+            <div style="padding:16px"><canvas id="fc-risk-chart" height="180"></canvas></div>
+          </div>
+        </div>
+
+        <div style="padding:0 24px 24px">
+          <div class="map-card">
+            <div class="map-card-header">
+              <div class="card-title">📅 Inkassatsiya Kalendari (keyingi 14 kun)</div>
+            </div>
+            <div style="padding:16px;overflow-x:auto" id="fc-calendar"></div>
+          </div>
+        </div>
+
+        <!-- AI Forecast text -->
+        <div class="ai-card" style="margin:0 24px 24px">
+          <div class="ai-header">
+            <div class="ai-icon"><svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.38-1 1.72V7h1a7 7 0 017 7h1v2h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2v-2h1a7 7 0 017-7h1V5.72c-.6-.34-1-.98-1-1.72a2 2 0 012-2M7.5 13A2.5 2.5 0 005 15.5 2.5 2.5 0 007.5 18a2.5 2.5 0 002.5-2.5A2.5 2.5 0 007.5 13m9 0a2.5 2.5 0 00-2.5 2.5 2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5-2.5A2.5 2.5 0 0016.5 13z"/></svg></div>
+            <span style="font-size:14px;font-weight:600">🤖 AI Bashorat Tahlili</span>
+            <button class="action-btn" style="margin-left:auto;padding:6px 14px;background:rgba(0,229,195,0.08);border-color:var(--accent);color:var(--accent);font-size:12px" onclick="genAiForecast()">Yangilash ↻</button>
+          </div>
+          <div style="padding:18px" id="fc-ai-text">
+            <div style="color:var(--text2);font-size:13px;line-height:1.8" id="fc-ai-content">
+              🔄 AI tahlilini yuklash uchun yuqoridagi "AI Tahlil" tugmasini bosing...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           HISOBOT PANEL
+      ══════════════════════════════════ -->
+      <div class="panel" id="hisobot-panel">
+        <div class="panel-header">
+          <div class="dash-title">Hisobotlar</div>
+          <div class="filter-row">
+            <select class="filter-select">
+              <option>Aprel 2025</option><option>Mart 2025</option><option>Fevral 2025</option>
+            </select>
+            <select class="filter-select">
+              <option>Barcha banklar</option>
+              <option>Ipoteka Bank</option><option>Asaka Bank</option><option>Kapital Bank</option>
+            </select>
+            <button class="action-btn" style="padding:8px 16px;background:rgba(0,136,255,0.1);border-color:var(--accent2);color:var(--accent2)" onclick="exportReport()">⬇ PDF Export</button>
+            <button class="action-btn" style="padding:8px 16px;background:rgba(0,229,195,0.08);border-color:var(--accent);color:var(--accent)" onclick="exportExcel()">⬇ Excel</button>
+          </div>
+        </div>
+
+        <div style="padding:0 24px 16px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <div class="stat-card c-green">
+            <div class="stat-label">Oylik operatsiyalar</div>
+            <div class="stat-val c-green">48,291</div>
+            <div class="stat-sub"><span class="stat-change up">▲ +12%</span> o'tgan oyga</div>
+          </div>
+          <div class="stat-card c-blue">
+            <div class="stat-label">Jami inkassatsiya</div>
+            <div class="stat-val c-blue">142</div>
+            <div class="stat-sub">marta · aprel</div>
+          </div>
+          <div class="stat-card c-warn">
+            <div class="stat-label">Naqd pul sarfi</div>
+            <div class="stat-val c-warn">96.4</div>
+            <div class="stat-sub">mlrd so'm</div>
+          </div>
+          <div class="stat-card c-danger">
+            <div class="stat-label">Uzilishlar</div>
+            <div class="stat-val c-danger">23</div>
+            <div class="stat-sub"><span class="stat-change down">▼ -8%</span> kamaydi</div>
+          </div>
+        </div>
+
+        <div style="padding:0 24px;display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px">
+          <div class="map-card">
+            <div class="map-card-header">
+              <div class="card-title">📊 Oylik operatsiyalar trendi</div>
+            </div>
+            <div style="padding:16px"><canvas id="rpt-trend-chart" height="160"></canvas></div>
+          </div>
+          <div class="map-card">
+            <div class="map-card-header">
+              <div class="card-title">🏦 Bank bo'yicha taqsimot</div>
+            </div>
+            <div style="padding:16px"><canvas id="rpt-bank-chart" height="160"></canvas></div>
+          </div>
+        </div>
+
+        <div style="padding:0 24px 24px">
+          <div class="map-card">
+            <div class="map-card-header">
+              <div class="card-title">📋 Oylik ATM hisoboti jadval</div>
+              <span style="font-size:12px;color:var(--text3)">Aprel 2025</span>
+            </div>
+            <div style="overflow-x:auto;padding:0 16px 16px">
+              <table class="atm-table" id="rpt-table" style="margin-top:12px">
+                <thead><tr>
+                  <th>ATM ID</th><th>Manzil</th><th>Operatsiyalar</th>
+                  <th>Inkassatsiya</th><th>Naqd sarfi</th><th>Uzilish</th><th>Samaradorlik</th>
+                </tr></thead>
+                <tbody id="rpt-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           OGOHLANTIRISHLAR PANEL
+      ══════════════════════════════════ -->
+      <div class="panel" id="alerts-panel">
+        <div class="panel-header">
+          <div class="dash-title">Ogohlantirishlar</div>
+          <div class="filter-row">
+            <select class="filter-select" onchange="filterAlerts(this.value)">
+              <option value="all">Barchasi</option>
+              <option value="critical">Kritik</option>
+              <option value="warn">Ogohlantirish</option>
+              <option value="info">Ma'lumot</option>
+              <option value="resolved">Hal qilingan</option>
+            </select>
+            <button class="action-btn" style="padding:8px 16px;background:rgba(0,229,195,0.08);border-color:var(--accent);color:var(--accent)" onclick="markAllResolved()">✓ Barchasini hal qilish</button>
+          </div>
+        </div>
+
+        <div style="padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px">
+          <div class="stat-card c-danger"><div class="stat-label">Kritik</div><div class="stat-val c-danger">2</div><div class="stat-sub">darhol choralar kerak</div></div>
+          <div class="stat-card c-warn"><div class="stat-label">Ogohlantirish</div><div class="stat-val c-warn">3</div><div class="stat-sub">monitoring kerak</div></div>
+          <div class="stat-card c-blue"><div class="stat-label">Ma'lumot</div><div class="stat-val c-blue">8</div><div class="stat-sub">ko'rib chiqilsin</div></div>
+          <div class="stat-card c-green"><div class="stat-label">Hal qilingan</div><div class="stat-val c-green">24</div><div class="stat-sub">bu hafta</div></div>
+        </div>
+
+        <div style="padding:0 24px 24px" id="alerts-list"></div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           SOZLAMALAR PANEL
+      ══════════════════════════════════ -->
+      <div class="panel" id="sozlamalar-panel">
+        <div class="panel-header">
+          <div class="dash-title">Tizim Sozlamalari</div>
+          <button class="action-btn" style="padding:8px 20px;background:rgba(0,229,195,0.1);border-color:var(--accent);color:var(--accent)" onclick="saveSozlamalar()">💾 Saqlash</button>
+        </div>
+        <div style="padding:0 24px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <!-- Threshold settings -->
+          <div class="map-card">
+            <div class="map-card-header"><div class="card-title">⚠️ Ogohlantirish chegaralari</div></div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:20px">
+              <div class="soz-group">
+                <div class="soz-label">Kritik chegara (naqd %)</div>
+                <div class="soz-row">
+                  <input type="range" min="5" max="40" value="20" class="soz-range" id="sz-critical" oninput="document.getElementById('sz-critical-val').textContent=this.value+'%'">
+                  <span class="soz-val" id="sz-critical-val" style="color:var(--danger)">20%</span>
+                </div>
+              </div>
+              <div class="soz-group">
+                <div class="soz-label">Ogohlantirish chegarasi (%)</div>
+                <div class="soz-row">
+                  <input type="range" min="20" max="60" value="40" class="soz-range" id="sz-warn" oninput="document.getElementById('sz-warn-val').textContent=this.value+'%'">
+                  <span class="soz-val" id="sz-warn-val" style="color:var(--warn)">40%</span>
+                </div>
+              </div>
+              <div class="soz-group">
+                <div class="soz-label">Bashorat davri (kun)</div>
+                <div class="soz-row">
+                  <input type="range" min="3" max="30" value="7" class="soz-range" id="sz-days" oninput="document.getElementById('sz-days-val').textContent=this.value+' kun'">
+                  <span class="soz-val" id="sz-days-val">7 kun</span>
+                </div>
+              </div>
+              <div class="soz-group">
+                <div class="soz-label">Ma'lumot yangilanish (daqiqa)</div>
+                <div class="soz-row">
+                  <input type="range" min="1" max="60" value="5" class="soz-range" id="sz-refresh" oninput="document.getElementById('sz-refresh-val').textContent=this.value+' daq'">
+                  <span class="soz-val" id="sz-refresh-val">5 daq</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="map-card">
+            <div class="map-card-header"><div class="card-title">🔔 Bildirishnomalar</div></div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:14px">
+              <div class="soz-toggle-row">
+                <div><div class="soz-label">SMS xabarnoma</div><div style="font-size:11px;color:var(--text3)">Kritik holatlarda SMS yuboriladi</div></div>
+                <label class="toggle"><input type="checkbox" checked id="sz-sms"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="soz-toggle-row">
+                <div><div class="soz-label">Email hisobot</div><div style="font-size:11px;color:var(--text3)">Kunlik hisobot emailga yuboriladi</div></div>
+                <label class="toggle"><input type="checkbox" checked id="sz-email"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="soz-toggle-row">
+                <div><div class="soz-label">Telegram bot</div><div style="font-size:11px;color:var(--text3)">Telegram kanaliga yuboriladi</div></div>
+                <label class="toggle"><input type="checkbox" id="sz-tg"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="soz-toggle-row">
+                <div><div class="soz-label">AI avtomatik bashorat</div><div style="font-size:11px;color:var(--text3)">Har kuni soat 06:00 da ishga tushadi</div></div>
+                <label class="toggle"><input type="checkbox" checked id="sz-ai"><span class="toggle-slider"></span></label>
+              </div>
+              <div style="margin-top:4px">
+                <div class="soz-label">Telegram kanal ID</div>
+                <input type="text" placeholder="@atm_alerts_uz" class="form-input" style="margin-top:6px;padding:10px 14px;font-size:13px">
+              </div>
+            </div>
+          </div>
+
+          <!-- Users -->
+          <div class="map-card">
+            <div class="map-card-header"><div class="card-title">👤 Foydalanuvchilar</div><button class="action-btn" style="font-size:11px;padding:4px 10px" onclick="addUser()">+ Qo'shish</button></div>
+            <div style="padding:8px 0" id="users-list">
+              <div class="user-row"><div class="user-av">AD</div><div class="user-info"><div class="user-name-t">Administrator</div><div class="user-email">admin@bank.uz</div></div><span class="status-pill ok">● Admin</span></div>
+              <div class="user-row"><div class="user-av" style="background:rgba(0,136,255,0.2);color:var(--accent2)">IN</div><div class="user-info"><div class="user-name-t">Inkassator 1</div><div class="user-email">ink1@bank.uz</div></div><span class="status-pill warn">● Inkassator</span></div>
+              <div class="user-row"><div class="user-av" style="background:rgba(255,184,0,0.15);color:var(--accent3)">MN</div><div class="user-info"><div class="user-name-t">Monitoring</div><div class="user-email">monitor@bank.uz</div></div><span class="status-pill ok">● Kuzatuvchi</span></div>
+            </div>
+          </div>
+
+          <!-- System info -->
+          <div class="map-card">
+            <div class="map-card-header"><div class="card-title">🖥️ Tizim holati</div></div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:12px">
+              <div class="sys-row"><span class="soz-label">Server holati</span><span style="color:var(--accent);font-family:var(--mono);font-size:12px">● ONLINE</span></div>
+              <div class="sys-row"><span class="soz-label">API versiya</span><span style="font-family:var(--mono);font-size:12px;color:var(--text2)">v2.4.1</span></div>
+              <div class="sys-row"><span class="soz-label">Ma'lumotlar bazasi</span><span style="color:var(--accent);font-family:var(--mono);font-size:12px">● PostgreSQL</span></div>
+              <div class="sys-row"><span class="soz-label">Oxirgi sinxronizatsiya</span><span style="font-family:var(--mono);font-size:12px;color:var(--text2)" id="last-sync"></span></div>
+              <div class="sys-row"><span class="soz-label">AI Model</span><span style="font-family:var(--mono);font-size:12px;color:var(--accent2)">Claude Sonnet 4</span></div>
+              <div class="sys-row"><span class="soz-label">Faol ATMlar</span><span style="font-family:var(--mono);font-size:12px;color:var(--accent)">231 / 247</span></div>
+              <div style="margin-top:8px;padding:10px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Server yuklanishi</div>
+                <div class="progress-bar" style="width:100%;height:8px"><div class="progress-fill" style="width:34%;background:var(--accent)"></div></div>
+                <div style="font-size:11px;color:var(--accent);margin-top:4px;font-family:var(--mono)">34% CPU · 2.1 GB RAM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA ============
+const atms = [
+  {id:'ATM-001',name:'Chorsu bozori',addr:'Chorsu, Toshkent',lat:41.3111,lng:69.2472,cash:78,balance:156,lastFill:'2025-04-22',forecast:'5 kun',status:'ok'},
+  {id:'ATM-002',name:'Yunusobod 14-kv',addr:"Yunusobod t., Toshkent",lat:41.3624,lng:69.2814,cash:34,balance:68,lastFill:'2025-04-20',forecast:'1.5 kun',status:'warn'},
+  {id:'ATM-003',name:'Mirzo Ulug\'bek metro',addr:"Mirzo Ulug'bek t.",lat:41.3245,lng:69.2156,cash:0,balance:0,lastFill:'2025-04-18',forecast:'Tugagan',status:'danger'},
+  {id:'ATM-004',name:'Navruz savdo markazi',addr:'Shayxontohur, Toshkent',lat:41.2998,lng:69.2401,cash:91,balance:182,lastFill:'2025-04-23',forecast:'7 kun',status:'ok'},
+  {id:'ATM-005',name:'Oybek metro',addr:'Toshkent shahar markazi',lat:41.3032,lng:69.2733,cash:12,balance:24,lastFill:'2025-04-17',forecast:'12 soat',status:'danger'},
+  {id:'ATM-006',name:'Hamza tumanı filiali',addr:"Hamza t., Toshkent",lat:41.2845,lng:69.2889,cash:55,balance:110,lastFill:'2025-04-21',forecast:'3 kun',status:'ok'},
+  {id:'ATM-007',name:'Sergeli tumanı',addr:"Sergeli t., Toshkent",lat:41.2334,lng:69.2012,cash:0,balance:0,lastFill:'2025-04-15',forecast:'Oflayn',status:'offline'},
+  {id:'ATM-008',name:'Chilonzor savdo markazi',addr:'Chilonzor, Toshkent',lat:41.2934,lng:69.2205,cash:67,balance:134,lastFill:'2025-04-22',forecast:'4 kun',status:'ok'},
+  {id:'ATM-009',name:'Beruniy ko\'cha',addr:"Beruniy ko'chasi",lat:41.3401,lng:69.3012,cash:22,balance:44,lastFill:'2025-04-19',forecast:'18 soat',status:'warn'},
+  {id:'ATM-010',name:'Aeroport terminali',addr:"Toshkent Xalqaro Aeroporti",lat:41.2579,lng:69.2822,cash:83,balance:166,lastFill:'2025-04-23',forecast:'6 kun',status:'ok'},
+  {id:'ATM-011',name:'Mustaqillik maydoni',addr:'Toshkent markazi',lat:41.2995,lng:69.2401,cash:41,balance:82,lastFill:'2025-04-20',forecast:'2 kun',status:'warn'},
+  {id:'ATM-012',name:'Bo\'stonliq filiali',addr:"Bo'stonliq t.",lat:41.5123,lng:69.6734,cash:0,balance:0,lastFill:'2025-04-14',forecast:'Tugagan',status:'danger'},
+  {id:'ATM-013',name:'Zangiota filiali',addr:"Zangiota t.",lat:41.1923,lng:69.2145,cash:72,balance:144,lastFill:'2025-04-22',forecast:'5 kun',status:'ok'},
+  {id:'ATM-014',name:'Uchtepa bozori',addr:"Uchtepa t., Toshkent",lat:41.3234,lng:69.1956,cash:29,balance:58,lastFill:'2025-04-19',forecast:'1 kun',status:'warn'},
+  {id:'ATM-015',name:'Olmazor filiali',addr:"Olmazor t., Toshkent",lat:41.3512,lng:69.2123,cash:0,balance:0,lastFill:'2025-04-16',forecast:'Oflayn',status:'offline'},
+  {id:'ATM-016',name:"O'qituvchilar uyi",addr:"Shayxontohur t.",lat:41.3089,lng:69.2678,cash:88,balance:176,lastFill:'2025-04-23',forecast:'7 kun',status:'ok'},
+  {id:'ATM-017',name:'Tinchlik prospekti',addr:"Yunusobod t.",lat:41.3734,lng:69.2945,cash:18,balance:36,lastFill:'2025-04-18',forecast:'20 soat',status:'warn'},
+  {id:'ATM-018',name:'Samarqand darvoza',addr:"Shahar markazi",lat:41.3156,lng:69.2589,cash:61,balance:122,lastFill:'2025-04-21',forecast:'4 kun',status:'ok'},
+];
+
+const statusColors = {ok:'#00C4A3',warn:'#FF8C00',danger:'#FF4B6E',offline:'#4A7BA8'};
+const statusLabels = {ok:'Yetarli',warn:'Kam naqd',danger:'Kritik',offline:'Oflayn'};
+
+// ============ LOGIN ============
+function doLogin(){
+  const u=document.getElementById('login-user').value;
+  const p=document.getElementById('login-pass').value;
+  if(u==='admin@bank.uz'&&p==='12345678'){
+    document.getElementById('login-screen').style.display='none';
+    const app=document.getElementById('app');
+    app.style.display='flex';
+    initDashboard();
+  } else {
+    alert("Noto'g'ri login yoki parol!");
+  }
+}
+document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
+function doLogout(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+// ============ PANEL NAVIGATION ============
+function showPanel(id, btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(id==='map-panel' && !mapFullInitialized) initMapFull();
+  if(id==='atm-list') renderTable(atms);
+}
+function setActive(el){
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ============ DATE ============
+function updateDate(){
+  const d=new Date();
+  document.getElementById('cur-date').textContent=
+    d.toLocaleDateString('uz-UZ',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
+    +' · '+d.toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ============ MAP (DASHBOARD) ============
+let mapDash;
+function initMap(){
+  mapDash = L.map('map',{zoomControl:true,attributionControl:false}).setView([41.31,69.24],12);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapDash);
+  addMarkers(mapDash, true); // store refs
+}
+
+// Fly to ATM on dashboard map and open analytics panel
+function openATMOnMap(id){
+  const atm=atms.find(a=>a.id===id);
+  if(!atm)return;
+  document.getElementById('atm-modal-overlay').classList.remove('open');
+  showPanel('dashboard',null);
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  document.querySelector('.sidebar-item').classList.add('active');
+  setTimeout(()=>{
+    mapDash.flyTo([atm.lat,atm.lng],16,{animate:true,duration:1.2});
+    setTimeout(()=>openAnalyticsPanel(atm),1300);
+  },100);
+}
+
+// ── ATM Detail Modal ──
+let currentModalId=null;
+let modalMiniMap=null;
+
+function openATMDetail(id){
+  const atm=atms.find(a=>a.id===id);
+  if(!atm)return;
+  currentModalId=id;
+  const c=statusColors[atm.status];
+  const labels={ok:'✓ Yetarli',warn:'⚠ Kam naqd',danger:'✕ Tugagan',offline:'○ Oflayn'};
+
+  // Fill modal fields
+  document.getElementById('modal-id').textContent=atm.id;
+  document.getElementById('modal-name').textContent=atm.name;
+  document.getElementById('modal-addr').textContent='📍 '+atm.addr;
+  document.getElementById('modal-dot').style.background=c;
+  document.getElementById('modal-badge').innerHTML=`<span class="status-pill ${atm.status}" style="font-size:12px">${labels[atm.status]}</span>`;
+
+  // Stats
+  document.getElementById('modal-cash').innerHTML=`<span style="color:${c}">${atm.cash}%</span>`;
+  document.getElementById('modal-cash-bar').style.cssText=`height:100%;border-radius:2px;width:${atm.cash}%;background:${c};transition:width .4s`;
+  document.getElementById('modal-balance').textContent=atm.balance+' mln';
+  document.getElementById('modal-forecast').textContent=atm.forecast;
+  document.getElementById('modal-forecast').style.color=atm.status==='ok'?'var(--accent)':atm.status==='warn'?'var(--warn)':'var(--danger)';
+  document.getElementById('modal-lastfill').textContent=atm.lastFill;
+
+  // Nav links
+  document.getElementById('modal-google-link').href=`https://www.google.com/maps/dir/?api=1&destination=${atm.lat},${atm.lng}`;
+  document.getElementById('modal-yandex-link').href=`https://yandex.com/maps/?rtext=~${atm.lat},${atm.lng}&rtt=auto`;
+
+  // Extra info
+  const daily=Math.round(atm.balance*1.8+Math.random()*50);
+  document.getElementById('modal-daily').textContent=daily+' ming so\'m / kun';
+  document.getElementById('modal-freq').textContent=atm.status==='ok'?'7 kunda 1 marta':atm.status==='warn'?'3 kunda 1 marta':'Darhol inkassatsiya!';
+  document.getElementById('modal-freq').style.color=atm.status==='ok'?'var(--accent)':atm.status==='warn'?'var(--warn)':'var(--danger)';
+  document.getElementById('modal-coords').textContent=atm.lat.toFixed(5)+', '+atm.lng.toFixed(5);
+
+  // Show overlay
+  document.getElementById('atm-modal-overlay').classList.add('open');
+
+  // Mini-map
+  setTimeout(()=>{
+    const container=document.getElementById('modal-minimap');
+    container.innerHTML='';
+    if(modalMiniMap){modalMiniMap.remove();modalMiniMap=null}
+    const mapDiv=document.createElement('div');
+    mapDiv.style.cssText='width:100%;height:200px';
+    container.appendChild(mapDiv);
+    modalMiniMap=L.map(mapDiv,{zoomControl:true,attributionControl:false,scrollWheelZoom:false}).setView([atm.lat,atm.lng],15);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(modalMiniMap);
+    // Pulsing circle for problem ATMs
+    if(atm.status!=='ok'){
+      L.circleMarker([atm.lat,atm.lng],{radius:22,color:c,fillColor:c,fillOpacity:0.15,weight:2,dashArray:'6,4'}).addTo(modalMiniMap);
+    }
+    L.marker([atm.lat,atm.lng],{icon:makeIcon(atm.status)}).addTo(modalMiniMap)
+      .bindPopup(`<b style="color:#111">${atm.name}</b><br><span style="color:${c};font-weight:700">${atm.cash}% naqd</span>`,{closeButton:false}).openPopup();
+    setTimeout(()=>modalMiniMap.invalidateSize(),50);
+  },80);
+}
+
+function closeATMDetail(e){
+  if(e&&e.target!==document.getElementById('atm-modal-overlay'))return;
+  document.getElementById('atm-modal-overlay').classList.remove('open');
+}
+function copyModalCoords(){
+  const atm=atms.find(a=>a.id===currentModalId);if(!atm)return;
+  navigator.clipboard.writeText(atm.lat+','+atm.lng);
+  document.getElementById('modal-coords').textContent='✓ Nusxalandi!';
+  setTimeout(()=>{document.getElementById('modal-coords').textContent=atm.lat.toFixed(5)+', '+atm.lng.toFixed(5)},1800);
+}
+
+// ═══════════════════════════════════════════
+// PER-ATM TRANZAKSIYA PROFILI GENERATORI
+// Har ATM uchun deterministik (seed asosida)
+// ═══════════════════════════════════════════
+
+// Seed-based pseudorandom (ATM ID dan hosil qilish uchun)
+function seededRand(seed){
+  let s=seed;
+  return function(){
+    s=(s*1664525+1013904223)&0xFFFFFFFF;
+    return(s>>>0)/0xFFFFFFFF;
+  };
+}
+
+// ATM xususiyatlariga qarab profil yaratish
+function genATMProfile(atm){
+  const idNum=parseInt(atm.id.replace('ATM-',''))||1;
+  const rand=seededRand(idNum*7+13);
+
+  // ATM turiga qarab asosiy haftalik pattern
+  const isMarket=atm.name.toLowerCase().includes('bozor')||atm.name.toLowerCase().includes('savdo');
+  const isMetro=atm.name.toLowerCase().includes('metro');
+  const isAeroport=atm.name.toLowerCase().includes('aeroport');
+  const isFilial=atm.name.toLowerCase().includes('filial');
+
+  // Hafta kunlari bazaviy koeffitsientlari [Du,Se,Ch,Pa,Ju,Sh,Ya]
+  let weekBase;
+  if(isMarket)      weekBase=[0.70,0.75,0.78,0.82,0.88,1.20,1.35]; // Bozor: dam olish kunlari yuqori
+  else if(isMetro)  weekBase=[0.95,1.00,1.00,0.98,1.05,0.80,0.65]; // Metro: ish kunlari yuqori
+  else if(isAeroport)weekBase=[0.85,0.88,0.90,0.95,1.10,1.15,1.20]; // Aeroport: juma-yakshanba yuqori
+  else if(isFilial) weekBase=[1.00,1.02,0.98,1.05,1.10,0.75,0.55]; // Filial: standart ish kuni
+  else              weekBase=[0.88,0.92,0.95,0.98,1.08,1.10,0.90]; // Boshqalar
+
+  // Random variatsiya qo'shish
+  const weekPattern=weekBase.map(v=>Math.round(v*(0.9+rand()*0.2)*100));
+
+  // Soatlik pattern [00-23]
+  let hourBase;
+  if(isMarket)      hourBase=[0,0,0,0,0,0,0.2,0.5,0.8,1.0,1.1,1.0,0.9,0.9,0.8,0.7,0.8,0.9,1.0,0.8,0.6,0.3,0.1,0];
+  else if(isMetro)  hourBase=[0,0,0,0,0,0.1,0.5,1.2,1.4,0.9,0.7,0.8,1.0,0.8,0.7,0.7,0.9,1.3,1.2,0.8,0.5,0.3,0.1,0];
+  else if(isAeroport)hourBase=[0.2,0.1,0.1,0.1,0.2,0.3,0.5,0.7,0.9,0.8,0.8,0.9,1.0,0.9,0.8,0.8,0.9,1.0,1.1,1.0,0.8,0.6,0.4,0.3];
+  else              hourBase=[0,0,0,0,0,0,0.1,0.4,0.9,1.0,0.9,1.0,1.1,0.9,0.8,0.9,1.0,1.0,0.9,0.7,0.5,0.3,0.1,0];
+  const hourPattern=hourBase.map(v=>Math.round(v*(0.85+rand()*0.3)*50+rand()*5));
+
+  // 7 kunlik naqd pul forecast
+  const cashNow=atm.cash;
+  const burnRate=isMarket?8:isMetro?6:isAeroport?5:4; // kunlik kamayish %
+  const forecast7=[];
+  let cash=cashNow;
+  for(let i=0;i<7;i++){
+    const d=new Date(); d.setDate(d.getDate()+i);
+    const isWknd=d.getDay()===0||d.getDay()===6;
+    const burn=burnRate*(isWknd?1.3:1)*(0.9+rand()*0.2);
+    cash=Math.max(0,cash-burn);
+    forecast7.push(Math.round(cash));
+  }
+
+  // O'rtacha kunlik tranzaksiya soni
+  const avgDaily=Math.round((isMarket?180:isMetro?220:isAeroport?140:120)*(0.85+rand()*0.3));
+  const weekDays=['Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba','Yakshanba'];
+  const peakDayIdx=weekPattern.indexOf(Math.max(...weekPattern));
+  const peakHourIdx=hourPattern.indexOf(Math.max(...hourPattern));
+
+  // Inkassatsiya tavsiyasi
+  const emptyDay=forecast7.findIndex(v=>v<15);
+  let recText='';
+  if(atm.status==='danger'||atm.status==='offline'){
+    recText='🚨 Darhol inkassatsiya kerak!';
+  } else if(emptyDay!==-1&&emptyDay<3){
+    recText=`⚠️ ${emptyDay+1} kun ichida tugaydi. Bugun yuboring.`;
+  } else if(emptyDay!==-1){
+    recText=`📅 ${weekDays[peakDayIdx]} dan oldin inkassatsiya rejalashtiring.`;
+  } else {
+    recText=`✅ ${weekDays[peakDayIdx]} lar eng yuqori. Shu hafta normal.`;
+  }
+
+  return{weekPattern,hourPattern,forecast7,avgDaily,peakDay:weekDays[peakDayIdx],peakHour:peakHourIdx,recText,burnRate};
+}
+
+// ═══════════════════════════════════════════
+// ANALYTICS PANEL UI
+// ═══════════════════════════════════════════
+let apForecastChart=null, apWeeklyChart=null, apHourlyChart=null;
+let panelOpen=false;
+
+function openAnalyticsPanel(atm){
+  const profile=genATMProfile(atm);
+  const c=statusColors[atm.status];
+  const labels={ok:'✓ Yetarli',warn:'⚠ Kam',danger:'✕ Kritik',offline:'○ Oflayn'};
+
+  // Header
+  document.getElementById('ap-dot').style.background=c;
+  document.getElementById('ap-id').textContent=atm.id;
+  document.getElementById('ap-name').textContent=atm.name;
+  document.getElementById('ap-badge').innerHTML=`<span style="background:${c}22;color:${c};font-size:10px;padding:2px 8px;border-radius:20px">${labels[atm.status]}</span>`;
+
+  // Cash bar
+  document.getElementById('ap-cash-pct').textContent=atm.cash+'%';
+  document.getElementById('ap-cash-pct').style.color=c;
+  document.getElementById('ap-cash-bar').style.cssText=`height:100%;border-radius:3px;width:${atm.cash}%;background:${c};transition:width .5s`;
+  document.getElementById('ap-balance').textContent=atm.balance+' mln so\'m';
+  document.getElementById('ap-forecast').textContent=atm.forecast;
+  document.getElementById('ap-forecast').style.color=c;
+
+  // Inkassatsiya tavsiya
+  const recEl=document.getElementById('ap-recommendation');
+  const isUrgent=atm.status==='danger'||profile.forecast7[0]<20;
+  recEl.innerHTML=`<div style="font-size:11px;color:${isUrgent?'var(--danger)':'var(--accent)'};font-weight:600">${profile.recText}</div>
+    <div style="font-size:10px;color:var(--text3);margin-top:3px">Kunlik yonish: ~${profile.burnRate}% · Eng yuqori kun: ${profile.peakDay}</div>`;
+
+  // Open panel
+  const panel=document.getElementById('atm-analytics-panel');
+  panel.style.width='280px';
+  panelOpen=true;
+
+  // Draw charts with small delay
+  setTimeout(()=>drawAPCharts(atm,profile,c),120);
+
+  // Reset to forecast tab
+  switchTab('forecast');
+}
+
+function closeAnalyticsPanel(){
+  document.getElementById('atm-analytics-panel').style.width='0';
+  panelOpen=false;
+}
+
+function switchTab(tab){
+  ['forecast','weekly','hourly'].forEach(t=>{
+    document.getElementById('tab-content-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+}
+
+const CHART_DEFAULTS={
+  responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#0D2040',borderColor:'#234870',borderWidth:1,titleColor:'#E8F4FF',bodyColor:'#7BA8D0',padding:8}},
+};
+
+function drawAPCharts(atm,profile,c){
+  // ── Forecast Chart (7 kun) ──
+  const days7=Array.from({length:7},(_,i)=>{
+    const d=new Date();d.setDate(d.getDate()+i);
+    return d.toLocaleDateString('uz-UZ',{weekday:'short',day:'numeric'});
+  });
+  if(apForecastChart){apForecastChart.destroy();apForecastChart=null}
+  const ctx1=document.getElementById('ap-forecast-chart').getContext('2d');
+  const critLine=Array(7).fill(20);
+  apForecastChart=new Chart(ctx1,{
+    type:'line',
+    data:{labels:days7,datasets:[
+      {label:'Naqd %',data:profile.forecast7,
+       borderColor:c,backgroundColor:c+'18',
+       borderWidth:2,tension:0.4,fill:true,pointRadius:4,
+       pointBackgroundColor:profile.forecast7.map(v=>v<20?'#FF4B6E':v<40?'#FF8C00':c),
+       pointBorderColor:'#0D2040',pointBorderWidth:1},
+      {label:'Kritik',data:critLine,borderColor:'#FF4B6E55',borderWidth:1,
+       borderDash:[4,3],pointRadius:0,fill:false},
+    ]},
+    options:{...CHART_DEFAULTS,
+      scales:{
+        x:{grid:{color:'rgba(26,58,92,0.4)'},ticks:{color:'#4A7BA8',font:{size:9},maxRotation:30}},
+        y:{grid:{color:'rgba(26,58,92,0.4)'},ticks:{color:'#4A7BA8',font:{size:9}},min:0,max:100,
+           ticks:{callback:v=>v+'%',color:'#4A7BA8',font:{size:9}}}
+      }
+    }
+  });
+  // Alert
+  const alertEl=document.getElementById('ap-forecast-alert');
+  const emptyDay=profile.forecast7.findIndex(v=>v<20);
+  if(emptyDay!==-1){
+    alertEl.style.display='block';
+    alertEl.style.cssText+=`;background:rgba(255,75,110,0.1);border:1px solid rgba(255,75,110,0.3);color:#FF4B6E`;
+    alertEl.textContent=`⚠ ${days7[emptyDay]} da naqd tugashi kutilmoqda`;
+  } else {
+    alertEl.style.display='none';
+  }
+
+  // ── Weekly Chart ──
+  if(apWeeklyChart){apWeeklyChart.destroy();apWeeklyChart=null}
+  const ctx2=document.getElementById('ap-weekly-chart').getContext('2d');
+  const weekLabels=['Du','Se','Ch','Pa','Ju','Sh','Ya'];
+  const maxW=Math.max(...profile.weekPattern);
+  apWeeklyChart=new Chart(ctx2,{
+    type:'bar',
+    data:{labels:weekLabels,datasets:[{
+      label:'Tranzaksiyalar',
+      data:profile.weekPattern,
+      backgroundColor:profile.weekPattern.map(v=>v===maxW?c+'DD':'#1A3A5C'),
+      borderColor:profile.weekPattern.map(v=>v===maxW?c:'#234870'),
+      borderWidth:1,borderRadius:4,
+    }]},
+    options:{...CHART_DEFAULTS,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#4A7BA8',font:{size:10}}},
+        y:{grid:{color:'rgba(26,58,92,0.4)'},ticks:{color:'#4A7BA8',font:{size:9}}}
+      }
+    }
+  });
+  document.getElementById('ap-peak-day').innerHTML=
+    `<span style="color:var(--accent)">📊 Eng yuqori:</span> <b style="color:var(--text)">${profile.peakDay}</b> — hafta boshiga nisbatan <b style="color:var(--accent)">${Math.round(maxW/Math.min(...profile.weekPattern)*10)/10}x</b> ko'p tranzaksiya`;
+
+  // ── Hourly Chart ──
+  if(apHourlyChart){apHourlyChart.destroy();apHourlyChart=null}
+  const ctx3=document.getElementById('ap-hourly-chart').getContext('2d');
+  const hourLabels=Array.from({length:24},(_,i)=>i%3===0?(i<10?'0'+i:i)+':00':'');
+  const maxH=Math.max(...profile.hourPattern);
+  apHourlyChart=new Chart(ctx3,{
+    type:'bar',
+    data:{labels:hourLabels,datasets:[{
+      label:'Tranzaksiya',
+      data:profile.hourPattern,
+      backgroundColor:profile.hourPattern.map(v=>v===maxH?'#0088FF':v>maxH*0.7?'#0088FF88':'#1A3A5C'),
+      borderWidth:0,borderRadius:2,
+    }]},
+    options:{...CHART_DEFAULTS,
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#4A7BA8',font:{size:8}}},
+        y:{grid:{color:'rgba(26,58,92,0.3)'},ticks:{color:'#4A7BA8',font:{size:8}}}
+      }
+    }
+  });
+  const ph=profile.peakHour;
+  document.getElementById('ap-peak-hour').innerHTML=
+    `<span style="color:var(--accent2)">🕐 Eng band soat:</span> <b style="color:var(--text)">${ph<10?'0'+ph:ph}:00–${ph+1<10?'0'+(ph+1):ph+1}:00</b> — shu vaqtda inkassatsiya <b style="color:var(--accent2)">qilinmasin</b>`;
+}
+
+// ═══════════════════════════════════════════
+// MARKER + ICON
+// ═══════════════════════════════════════════
+function makeIcon(status){
+  const c=statusColors[status];
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+    <path d="M16 0C7.2 0 0 7.2 0 16c0 10 16 24 16 24S32 26 32 16C32 7.2 24.8 0 16 0z" fill="${c}" opacity="0.9"/>
+    <circle cx="16" cy="16" r="8" fill="white" opacity="0.25"/>
+    <text x="16" y="21" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="IBM Plex Mono">A</text>
+  </svg>`;
+  return L.divIcon({
+    html:svg,className:'',iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-36]
+  });
+}
+
+function makePopup(atm){
+  const c=statusColors[atm.status];
+  const cashW=atm.cash;
+  const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${atm.lat},${atm.lng}`;
+  const yUrl=`https://yandex.com/maps/?rtext=~${atm.lat},${atm.lng}&rtt=auto`;
+  return `<div style="min-width:220px;font-family:'DM Sans',sans-serif">
+    <div class="popup-header">
+      <span class="popup-id">${atm.id}</span>
+      <span style="background:${c}20;color:${c};font-size:11px;padding:2px 8px;border-radius:20px;margin-left:auto">${statusLabels[atm.status]}</span>
+    </div>
+    <div class="popup-name">${atm.name}</div>
+    <div style="font-size:12px;color:#7BA8D0;margin-bottom:10px">${atm.addr}</div>
+    <div class="popup-row"><span class="popup-label">Naqd daraja</span><span class="popup-val" style="color:${c};font-weight:700">${atm.cash}%</span></div>
+    <div class="popup-row"><span class="popup-label">Qoldiq</span><span class="popup-val">${atm.balance} mln so'm</span></div>
+    <div class="popup-row"><span class="popup-label">Bashorat</span><span class="popup-val">${atm.forecast}</span></div>
+    <div class="popup-row"><span class="popup-label">Oxirgi to'ldirish</span><span class="popup-val">${atm.lastFill}</span></div>
+    <div class="popup-cash-bar" style="margin-bottom:12px"><div class="popup-cash-fill" style="width:${cashW}%;background:${c}"></div></div>
+    <div style="display:flex;gap:6px">
+      <a href="${gUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:#1A73E8;color:white;border-radius:8px;font-size:11px;font-weight:600;text-decoration:none">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Google Maps
+      </a>
+      <a href="${yUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:#FC3F1D;color:white;border-radius:8px;font-size:11px;font-weight:600;text-decoration:none">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Yandex
+      </a>
+      <button onclick="openATMDetail('${atm.id}')" style="padding:7px 10px;background:rgba(0,229,195,0.15);border:1px solid rgba(0,229,195,0.3);border-radius:8px;color:#00E5C3;font-size:11px;font-weight:600;cursor:pointer">
+        Batafsil
+      </button>
+    </div>
+  </div>`;
+}
+
+// Store marker refs for flying to them
+const dashMarkers={};
+function addMarkers(mapObj, store=false){
+  atms.forEach(atm=>{
+    const m=L.marker([atm.lat,atm.lng],{icon:makeIcon(atm.status)}).addTo(mapObj);
+    if(store){
+      // Dashboard map: click → analytics panel (no leaflet popup)
+      m.on('click',()=>openAnalyticsPanel(atm));
+      dashMarkers[atm.id]=m;
+    } else {
+      // Second map (map-full): simple popup only
+      m.bindPopup(makePopup(atm),{maxWidth:280,className:'atm-popup'});
+    }
+  });
+}
+
+// ============ MAP FULL ============
+let mapFull, mapFullInitialized=false;
+function initMapFull(){
+  mapFull = L.map('map-full',{zoomControl:true,attributionControl:false}).setView([41.31,69.24],12);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapFull);
+  addMarkers(mapFull);
+  mapFullInitialized=true;
+  setTimeout(()=>mapFull.invalidateSize(),100);
+}
+
+// ============ CHART ============
+function initChart(){
+  const ctx=document.getElementById('forecastChart').getContext('2d');
+  const days=['Du','Se','Ch','Pa','Ju','Sh','Ya'];
+  new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:days,
+      datasets:[
+        {label:'Talab (mln)',data:[380,420,395,480,520,610,580],
+         borderColor:'#00E5C3',backgroundColor:'rgba(0,229,195,0.08)',
+         borderWidth:2,tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#00E5C3'},
+        {label:'Bashorat',data:[null,null,null,null,520,590,560],
+         borderColor:'#0088FF',backgroundColor:'rgba(0,136,255,0.06)',
+         borderWidth:2,borderDash:[5,4],tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:'#0088FF'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:'#0D2040',borderColor:'#234870',borderWidth:1,
+        titleColor:'#E8F4FF',bodyColor:'#7BA8D0'
+      }},
+      scales:{
+        x:{grid:{color:'rgba(26,58,92,0.5)'},ticks:{color:'#4A7BA8',font:{size:11}}},
+        y:{grid:{color:'rgba(26,58,92,0.5)'},ticks:{color:'#4A7BA8',font:{size:11}}}
+      }
+    }
+  });
+}
+
+// ============ ATM TABLE ============
+function renderTable(data){
+  const tbody=document.getElementById('atm-tbody');
+  tbody.innerHTML=data.map(a=>{
+    const c=statusColors[a.status];
+    const pct=a.cash;
+    let pColor='#00C4A3';
+    if(pct<30)pColor='#FF4B6E';
+    else if(pct<50)pColor='#FF8C00';
+    return `<tr style="cursor:pointer" onclick="openATMDetail('${a.id}')">
+      <td><span class="atm-id">${a.id}</span></td>
+      <td>
+        <div style="font-size:13px;color:var(--text);font-weight:500">${a.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${a.addr}</div>
+      </td>
+      <td><span class="status-pill ${a.status}">● ${statusLabels[a.status]}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pColor}"></div></div>
+          <span style="font-family:var(--mono);font-size:12px;color:${pColor}">${pct}%</span>
+        </div>
+      </td>
+      <td><span style="font-family:var(--mono);font-size:13px">${a.balance}</span></td>
+      <td style="font-size:12px;color:var(--text3)">${a.lastFill}</td>
+      <td style="font-size:12px;color:${a.status==='ok'?'var(--accent)':a.status==='warn'?'var(--warn)':'var(--danger)'}">${a.forecast}</td>
+      <td onclick="event.stopPropagation()" style="display:flex;gap:6px">
+        <button class="action-btn" onclick="openATMDetail('${a.id}')" style="color:var(--accent2);border-color:var(--accent2)">
+          📋 Ko'rish
+        </button>
+        <button class="action-btn" onclick="openATMOnMap('${a.id}')" style="color:var(--accent);border-color:var(--accent)">
+          🗺 Xarita
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+let currentStatus='all';
+let currentSearch='';
+function filterATMs(q){
+  currentSearch=q.toLowerCase();
+  applyFilters();
+}
+function filterByStatus(s){
+  currentStatus=s;
+  applyFilters();
+}
+function applyFilters(){
+  let d=atms;
+  if(currentStatus!=='all') d=d.filter(a=>a.status===currentStatus);
+  if(currentSearch) d=d.filter(a=>
+    a.id.toLowerCase().includes(currentSearch)||
+    a.name.toLowerCase().includes(currentSearch)||
+    a.addr.toLowerCase().includes(currentSearch)
+  );
+  renderTable(d);
+}
+
+// ============ MOBILE HELPERS ============
+function isMobile(){ return window.innerWidth <= 768; }
+
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('mob-overlay').classList.toggle('show');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('show');
+}
+
+// Mobile bottom nav → show panel + update active state
+function mobNav(panelId, btn){
+  showPanel(panelId, null);
+  document.querySelectorAll('.mob-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  closeSidebar();
+}
+
+// Show/hide hamburger on resize
+function applyMobileLayout(){
+  const menuBtn = document.getElementById('mob-menu');
+  if(window.innerWidth <= 768){
+    if(menuBtn) menuBtn.style.display='flex';
+  } else {
+    if(menuBtn) menuBtn.style.display='none';
+    closeSidebar();
+  }
+}
+window.addEventListener('resize', applyMobileLayout);
+window.addEventListener('load',   applyMobileLayout);
+
+// Analytics panel mobile: update open width
+const _origOpenPanel = openAnalyticsPanel;
+function openAnalyticsPanel(atm){
+  _origOpenPanel(atm);
+  if(isMobile()){
+    // On mobile override width to 100%
+    document.getElementById('atm-analytics-panel').style.width='100%';
+  }
+}
+
+// ============ INIT ============
+function initDashboard(){
+  updateDate();
+  setInterval(updateDate, 60000);
+  initMap();
+  initChart();
+  renderTable(atms);
+  buildForecastSelect();
+  buildAlertsPanel();
+  buildReportTable();
+  initReportCharts();
+  document.getElementById('last-sync').textContent = new Date().toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ============ BASHORAT PANEL ============
+function buildForecastSelect(){
+  const sel=document.getElementById('forecast-atm-select');
+  atms.forEach(a=>{
+    const o=document.createElement('option');
+    o.value=a.id; o.textContent=a.id+' — '+a.name;
+    sel.appendChild(o);
+  });
+  renderForecast();
+}
+
+let fcMainChart=null, fcRiskChart=null;
+function renderForecast(){
+  const days=parseInt(document.getElementById('forecast-days-select').value);
+  const labels=Array.from({length:days},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()+i);
+    return d.toLocaleDateString('uz-UZ',{month:'short',day:'numeric'});
+  });
+
+  // Generate simulated demand data
+  function genDemand(base,days){
+    return Array.from({length:days},(_,i)=>{
+      const weekend=(new Date().getDay()+i)%7>=5?1.25:1;
+      return Math.round(base*(0.85+Math.random()*0.35)*weekend);
+    });
+  }
+
+  const actual=genDemand(320,Math.min(days,4));
+  const forecast=Array.from({length:days},(_,i)=>Math.round(300+i*8+Math.random()*60));
+
+  if(fcMainChart) fcMainChart.destroy();
+  const ctx=document.getElementById('fc-main-chart').getContext('2d');
+  fcMainChart=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Haqiqiy',data:[...actual,...Array(days-actual.length).fill(null)],
+       borderColor:'#00E5C3',backgroundColor:'rgba(0,229,195,0.08)',borderWidth:2,tension:0.4,fill:true,pointRadius:3},
+      {label:'Bashorat',data:[...Array(actual.length-1).fill(null),actual[actual.length-1],...forecast.slice(actual.length)],
+       borderColor:'#0088FF',backgroundColor:'rgba(0,136,255,0.06)',borderWidth:2,borderDash:[5,4],tension:0.4,fill:true,pointRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#7BA8D0',font:{size:11}}}},
+      scales:{x:{grid:{color:'rgba(26,58,92,0.5)'},ticks:{color:'#4A7BA8',font:{size:10},maxTicksLimit:8}},
+              y:{grid:{color:'rgba(26,58,92,0.5)'},ticks:{color:'#4A7BA8',font:{size:10}}}}}
+  });
+
+  // Risk chart
+  const riskData=atms.map(a=>({id:a.id.replace('ATM-',''),risk:Math.max(0,100-a.cash-Math.random()*20),color:a.status==='ok'?'#00C4A3':a.status==='warn'?'#FF8C00':'#FF4B6E'}));
+  if(fcRiskChart) fcRiskChart.destroy();
+  const ctx2=document.getElementById('fc-risk-chart').getContext('2d');
+  fcRiskChart=new Chart(ctx2,{
+    type:'bar',
+    data:{labels:riskData.map(r=>r.id),
+          datasets:[{label:'Risk %',data:riskData.map(r=>r.risk),backgroundColor:riskData.map(r=>r.color+'99'),borderColor:riskData.map(r=>r.color),borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'rgba(26,58,92,0.3)'},ticks:{color:'#4A7BA8',font:{size:9}}},
+              y:{grid:{color:'rgba(26,58,92,0.3)'},ticks:{color:'#4A7BA8',font:{size:10}},max:100}}}
+  });
+
+  // Update stats
+  const avg=Math.round(atms.reduce((s,a)=>s+a.cash,0)/atms.length);
+  document.getElementById('fc-avg').textContent=avg+'%';
+  document.getElementById('fc-risk').textContent=atms.filter(a=>a.cash<40).length;
+
+  // Calendar
+  buildFcCalendar(days);
+}
+
+function buildFcCalendar(days){
+  const el=document.getElementById('fc-calendar');
+  const cols=Math.min(days,14);
+  let html='<div style="display:grid;grid-template-columns:repeat('+cols+',1fr);gap:6px;min-width:600px">';
+  for(let i=0;i<cols;i++){
+    const d=new Date(); d.setDate(d.getDate()+i);
+    const dn=d.toLocaleDateString('uz-UZ',{weekday:'short'});
+    const dd=d.getDate();
+    const isWeekend=d.getDay()===0||d.getDay()===6;
+    const needFill=i===1||i===4||i===8;
+    html+=`<div style="background:${needFill?'rgba(255,75,110,0.12)':isWeekend?'rgba(255,184,0,0.08)':'var(--bg3)'};border:1px solid ${needFill?'rgba(255,75,110,0.3)':isWeekend?'rgba(255,184,0,0.2)':'var(--border)'};border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase">${dn}</div>
+      <div style="font-size:18px;font-weight:700;font-family:var(--mono);color:${isWeekend?'var(--accent3)':'var(--text)'}">${dd}</div>
+      ${needFill?'<div style="font-size:9px;color:var(--danger);margin-top:2px">Inkassatsiya</div>':'<div style="font-size:9px;color:var(--text3);margin-top:2px">&nbsp;</div>'}
+    </div>`;
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+async function genAiForecast(){
+  const btn=document.querySelector('[onclick="genAiForecast()"]');
+  if(btn){btn.textContent='⏳ Tahlil qilinmoqda...';btn.disabled=true}
+  const el=document.getElementById('fc-ai-content');
+  el.innerHTML='<div style="display:flex;gap:4px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:typeDot 1.2s ease-in-out infinite 0s;display:inline-block"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:typeDot 1.2s ease-in-out infinite 0.2s;display:inline-block"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:typeDot 1.2s ease-in-out infinite 0.4s;display:inline-block"></span></div>';
+  const prompt=`Quyidagi ATM ma'lumotlari asosida 7 kunlik bashorat tahlilini O'zbek tilida yoz. Har bir bo'limni emoji bilan boshla. 
+Qisqa, aniq va amaliy tavsiyalar ber (250-300 so'z):
+- Umumiy holat tahlili
+- Eng xavfli ATMlar ro'yxati
+- Inkassatsiya rejasi tavsiyasi
+- Hafta oxiri uchun tavsiyalar
+
+ATM ma'lumotlari: ${JSON.stringify(atms.map(a=>({id:a.id,naqd:a.cash+'%',holat:a.status,bashorat:a.forecast})))}`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'Xato yuz berdi';
+    el.innerHTML=markdownToHtml(text);
+  }catch(e){el.innerHTML='⚠️ Tarmoq xatosi. Qaytadan urinib ko\'ring.'}
+  if(btn){btn.textContent='Yangilash ↻';btn.disabled=false}
+}
+
+// ============ HISOBOT PANEL ============
+let rptTrendChart=null, rptBankChart=null;
+function initReportCharts(){
+  // Trend chart
+  const months=['Nov','Dec','Jan','Feb','Mar','Apr'];
+  const ctx=document.getElementById('rpt-trend-chart').getContext('2d');
+  rptTrendChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels:months,datasets:[
+      {label:'Operatsiyalar (ming)',data:[38,41,35,44,45,48],backgroundColor:'rgba(0,136,255,0.6)',borderColor:'var(--accent2)',borderWidth:1,borderRadius:4},
+      {label:'Inkassatsiya',data:[120,134,115,138,140,142],backgroundColor:'rgba(0,229,195,0.4)',borderColor:'var(--accent)',borderWidth:1,borderRadius:4,yAxisID:'y2'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{labels:{color:'#7BA8D0',font:{size:10}}}},
+      scales:{
+        x:{grid:{color:'rgba(26,58,92,0.4)'},ticks:{color:'#4A7BA8',font:{size:10}}},
+        y:{grid:{color:'rgba(26,58,92,0.4)'},ticks:{color:'#4A7BA8',font:{size:10}}},
+        y2:{position:'right',grid:{display:false},ticks:{color:'#00C4A3',font:{size:10}}}
+      }
+    }
+  });
+
+  // Bank pie chart
+  const ctx2=document.getElementById('rpt-bank-chart').getContext('2d');
+  rptBankChart=new Chart(ctx2,{
+    type:'doughnut',
+    data:{
+      labels:['Ipoteka Bank','Asaka Bank','Kapital Bank','Savdo Bank','Boshqalar'],
+      datasets:[{data:[28,22,18,16,16],backgroundColor:['#00E5C3','#0088FF','#FFB800','#FF4B6E','#4A7BA8'],borderWidth:0}]
+    },
+    options:{responsive:true,maintainAspectRatio:true,cutout:'60%',
+      plugins:{legend:{position:'right',labels:{color:'#7BA8D0',font:{size:10},padding:8,boxWidth:12}}}
+    }
+  });
+}
+
+function buildReportTable(){
+  const tbody=document.getElementById('rpt-tbody');
+  tbody.innerHTML=atms.map(a=>{
+    const ops=Math.round(a.balance*2+Math.random()*100);
+    const fills=Math.round(3+Math.random()*5);
+    const sarif=Math.round(a.balance*fills*0.8);
+    const uzilish=a.status==='danger'?Math.round(Math.random()*5+3):Math.round(Math.random()*2);
+    const eff=Math.round(95-uzilish*3);
+    const effColor=eff>90?'var(--accent)':eff>80?'var(--warn)':'var(--danger)';
+    return `<tr>
+      <td><span class="atm-id">${a.id}</span></td>
+      <td><div style="font-size:12px;color:var(--text)">${a.name}</div><div style="font-size:10px;color:var(--text3)">${a.addr}</div></td>
+      <td style="font-family:var(--mono);font-size:12px">${ops.toLocaleString()}</td>
+      <td style="font-family:var(--mono);font-size:12px">${fills} marta</td>
+      <td style="font-family:var(--mono);font-size:12px">${sarif} mln</td>
+      <td style="font-family:var(--mono);font-size:12px;color:${uzilish>3?'var(--danger)':'var(--text2)'}">${uzilish}</td>
+      <td><span style="font-family:var(--mono);font-size:12px;color:${effColor}">${eff}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function exportReport(){
+  const w=window.open('','_blank');
+  w.document.write('<html><body><h2>ATM Hisobot — Aprel 2025</h2><p>Chop etish uchun Ctrl+P bosing.</p>');
+  w.document.write(document.getElementById('rpt-table').outerHTML);
+  w.document.write('</body></html>');
+  w.document.close(); w.print();
+}
+function exportExcel(){
+  let csv='ATM ID,Manzil,Operatsiyalar,Inkassatsiya,Naqd sarfi,Uzilish,Samaradorlik\n';
+  atms.forEach(a=>{const ops=Math.round(a.balance*2+100);csv+=`${a.id},${a.name},${ops},4 marta,${a.balance*4} mln,1,94%\n`;});
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');link.href=url;link.download='atm-hisobot-2025-aprel.csv';link.click();
+}
+
+// ============ OGOHLANTIRISHLAR ============
+const alertsData=[
+  {id:'ATM-003',type:'critical',title:'Naqd pul tugadi',desc:'Mirzo Ulug\'bek metro ATMida naqd pul qolmadi. Darhol inkassatsiya kerak.',time:'10 daqiqa oldin',resolved:false},
+  {id:'ATM-005',type:'critical',title:'Naqd pul tugadi',desc:'Oybek metro ATMida faqat 12% naqd pul qoldi. Kritik daraja.',time:'24 daqiqa oldin',resolved:false},
+  {id:'ATM-002',type:'warn',title:'Naqd kam — 34%',desc:'Yunusobod 14-kv ATMi ogohlantirish darajasida. 1.5 kun ichida tugaydi.',time:'1 soat oldin',resolved:false},
+  {id:'ATM-009',type:'warn',title:'Naqd kam — 22%',desc:'Beruniy ko\'cha ATMi 18 soat ichida tugashi kutilmoqda.',time:'2 soat oldin',resolved:false},
+  {id:'ATM-007',type:'warn',title:'Aloqa uzildi',desc:'Sergeli tumani ATMi bilan aloqa 3 soatdan beri yo\'q.',time:'3 soat oldin',resolved:false},
+  {id:'ATM-004',type:'info',title:'Inkassatsiya rejalashtirildi',desc:'Navruz savdo markazi ATMi uchun ertaga inkassatsiya rejalashtirilgan.',time:'5 soat oldin',resolved:false},
+  {id:'ATM-001',type:'info',title:'Yuqori talab aniqlandi',desc:'Chorsu bozori ATMida bugun kunlik o\'rtachadan 40% ko\'p operatsiya.',time:'6 soat oldin',resolved:false},
+  {id:'ATM-006',type:'resolved',title:'Inkassatsiya yakunlandi',desc:'Hamza tumani filiali ATMi muvaffaqiyatli to\'ldirildi.',time:'Kecha 18:30',resolved:true},
+  {id:'ATM-008',type:'resolved',title:'Aloqa tiklandi',desc:'Chilonzor savdo markazi ATMi bilan aloqa qayta o\'rnatildi.',time:'Kecha 14:20',resolved:true},
+];
+
+function buildAlertsPanel(){filterAlerts('all')}
+
+function filterAlerts(type){
+  const el=document.getElementById('alerts-list');
+  const filtered=type==='all'?alertsData:alertsData.filter(a=>a.type===type);
+  el.innerHTML=filtered.map((a,i)=>{
+    const colors={critical:{bg:'rgba(255,75,110,0.08)',border:'rgba(255,75,110,0.25)',dot:'var(--danger)',badge:'danger'},
+                  warn:{bg:'rgba(255,140,0,0.08)',border:'rgba(255,140,0,0.25)',dot:'var(--warn)',badge:'warn'},
+                  info:{bg:'rgba(0,136,255,0.08)',border:'rgba(0,136,255,0.2)',dot:'var(--accent2)',badge:'ok'},
+                  resolved:{bg:'rgba(74,123,168,0.06)',border:'rgba(74,123,168,0.15)',dot:'var(--text3)',badge:'offline'}};
+    const c=colors[a.type]||colors.info;
+    const typeLabel={critical:'🔴 Kritik',warn:'🟡 Ogohlantirish',info:'🔵 Ma\'lumot',resolved:'✅ Hal qilindi'}[a.type];
+    return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start" id="alert-${i}">
+      <div style="width:10px;height:10px;border-radius:50%;background:${c.dot};flex-shrink:0;margin-top:4px"></div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--accent2)">${a.id}</span>
+          <span class="status-pill ${c.badge}" style="font-size:10px;padding:2px 8px">${typeLabel}</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--text3);font-family:var(--mono)">${a.time}</span>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">${a.title}</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5">${a.desc}</div>
+      </div>
+      ${!a.resolved?`<button class="action-btn" style="font-size:11px;padding:5px 12px;flex-shrink:0" onclick="resolveAlert(${i})">Hal qilish</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+function resolveAlert(i){
+  alertsData[i].resolved=true;alertsData[i].type='resolved';alertsData[i].time='Hozir';
+  filterAlerts('all');
+}
+function markAllResolved(){
+  alertsData.forEach(a=>{a.resolved=true;a.type='resolved'});
+  filterAlerts('all');
+  document.querySelector('.sidebar-badge').style.display='none';
+}
+
+// ============ SOZLAMALAR ============
+function saveSozlamalar(){
+  const btn=document.querySelector('[onclick="saveSozlamalar()"]');
+  btn.textContent='✓ Saqlandi!';btn.style.background='rgba(0,229,195,0.2)';
+  setTimeout(()=>{btn.textContent='💾 Saqlash';btn.style.background=''},2000);
+}
+function addUser(){
+  const name=prompt('Foydalanuvchi ismi:');
+  if(!name)return;
+  const email=prompt('Email:');
+  if(!email)return;
+  const list=document.getElementById('users-list');
+  const initials=name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const colors=['rgba(0,229,195,0.15)','rgba(0,136,255,0.2)','rgba(255,184,0,0.15)'];
+  const textColors=['var(--accent)','var(--accent2)','var(--accent3)'];
+  const ri=Math.floor(Math.random()*3);
+  list.innerHTML+=`<div class="user-row"><div class="user-av" style="background:${colors[ri]};color:${textColors[ri]}">${initials}</div><div class="user-info"><div class="user-name-t">${name}</div><div class="user-email">${email}</div></div><span class="status-pill ok">● Yangi</span></div>`;
+}
+</script>
+
+<!-- ============ MOBILE BOTTOM NAV ============ -->
+<div class="mobile-nav" id="mobile-nav">
+  <button class="mob-btn active" id="mob-dashboard" onclick="mobNav('dashboard',this)">
+    <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 4h2v-2h-2v2zm0-4h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2z"/></svg>
+    Bosh
+  </button>
+  <button class="mob-btn" id="mob-map" onclick="mobNav('map-panel',this)">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    Xarita
+  </button>
+  <button class="mob-btn" id="mob-list" onclick="mobNav('atm-list',this)">
+    <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+    Ro'yxat
+  </button>
+  <button class="mob-btn" id="mob-alerts" onclick="mobNav('alerts-panel',this)">
+    <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 15l-1-1V12h2v4l-1 1zm0-6h-2V9h2v2z"/></svg>
+    Xabar
+    <div class="mob-btn-badge">5</div>
+  </button>
+  <button class="mob-btn" id="mob-soz" onclick="mobNav('sozlamalar-panel',this)">
+    <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 018.5 12 3.5 3.5 0 0112 8.5a3.5 3.5 0 013.5 3.5 3.5 3.5 0 01-3.5 3.5m7.43-2.92c.04-.34.07-.68.07-1.08s-.03-.74-.07-1.08l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.63c-.04.34-.07.69-.07 1.08s.03.74.07 1.08l-2.11 1.63c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.23.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63z"/></svg>
+    Sozlama
+  </button>
+</div>
+
+<!-- Sidebar overlay (mobile) -->
+<div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+<!-- ============ ATM DETAIL MODAL ============ -->
+<div class="atm-modal-overlay" id="atm-modal-overlay" onclick="closeATMDetail(event)">
+  <div class="atm-modal" id="atm-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-status-dot" id="modal-dot"></div>
+      <div style="flex:1">
+        <div class="modal-id" id="modal-id"></div>
+        <div class="modal-title" id="modal-name"></div>
+        <div style="font-size:12px;color:var(--text3)" id="modal-addr"></div>
+      </div>
+      <div id="modal-badge"></div>
+      <button class="modal-close" onclick="document.getElementById('atm-modal-overlay').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Stats row -->
+      <div class="modal-stats">
+        <div class="modal-stat">
+          <div class="modal-stat-label">Naqd daraja</div>
+          <div class="modal-stat-val" id="modal-cash"></div>
+          <div style="height:4px;border-radius:2px;background:var(--border);margin-top:6px;overflow:hidden"><div id="modal-cash-bar" style="height:100%;border-radius:2px;transition:width .4s"></div></div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-label">Qoldiq</div>
+          <div class="modal-stat-val" id="modal-balance" style="color:var(--accent2)"></div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-label">Bashorat</div>
+          <div class="modal-stat-val" id="modal-forecast" style="font-size:16px"></div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-label">Oxirgi to'ldirildi</div>
+          <div class="modal-stat-val" id="modal-lastfill" style="font-size:14px;color:var(--text2)"></div>
+        </div>
+      </div>
+
+      <!-- Mini map -->
+      <div class="modal-minimap" id="modal-minimap"></div>
+
+      <!-- Navigation -->
+      <div class="modal-nav-title">📍 Yo'l ko'rsatish — navigatsiya ilovasi</div>
+      <div class="modal-nav-btns">
+        <a class="modal-nav-btn google" id="modal-google-link" href="#" target="_blank">
+          <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          <div>
+            <div>Google Maps</div>
+            <div class="modal-nav-btn-sub">Yo'l ko'rsatishni boshlash</div>
+          </div>
+        </a>
+        <a class="modal-nav-btn yandex" id="modal-yandex-link" href="#" target="_blank">
+          <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          <div>
+            <div>Yandex Maps</div>
+            <div class="modal-nav-btn-sub">Yandex navigatsiya</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Extra info -->
+      <div class="modal-info-grid">
+        <div class="modal-info-card">
+          <div class="modal-info-card-label">📊 Kunlik talab (bashorat)</div>
+          <div class="modal-info-card-val" id="modal-daily"></div>
+        </div>
+        <div class="modal-info-card">
+          <div class="modal-info-card-label">🔄 Inkassatsiya chastotasi</div>
+          <div class="modal-info-card-val" id="modal-freq"></div>
+        </div>
+        <div class="modal-info-card">
+          <div class="modal-info-card-label">📍 Koordinatalar</div>
+          <div class="modal-info-card-val" id="modal-coords" style="font-family:var(--mono);font-size:12px;cursor:pointer" onclick="copyModalCoords()"></div>
+        </div>
+        <div class="modal-info-card">
+          <div class="modal-info-card-label">🗺 Xaritada ko'rish</div>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <button class="action-btn" onclick="openATMOnMap(currentModalId)" style="color:var(--accent);border-color:var(--accent);padding:5px 12px;font-size:12px">Dashboard xaritasi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AI CHAT ============ -->
+
+<!-- FAB button -->
+<button class="chat-fab" id="chat-fab" onclick="toggleChat()">
+  <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+  <div class="chat-unread" id="chat-unread">1</div>
+</button>
+
+<!-- Chat panel -->
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-header">
+    <div class="chat-avatar">
+      <svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.38-1 1.72V7h1a7 7 0 017 7h1v2h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2v-2h1a7 7 0 017-7h1V5.72c-.6-.34-1-.98-1-1.72a2 2 0 012-2M7.5 13A2.5 2.5 0 005 15.5 2.5 2.5 0 007.5 18a2.5 2.5 0 002.5-2.5A2.5 2.5 0 007.5 13m9 0a2.5 2.5 0 00-2.5 2.5 2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5-2.5A2.5 2.5 0 0016.5 13z"/></svg>
+    </div>
+    <div class="chat-header-info">
+      <div class="chat-header-name">ATM AI Yordamchi</div>
+      <div class="chat-header-status" id="chat-status-line">
+        <div class="badge-dot"></div>
+        Onlayn · Claude Sonnet tomonidan
+      </div>
+    </div>
+    <button onclick="showKeySetup()" title="API Key sozlash" style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 8px;color:var(--text3);cursor:pointer;font-size:13px;transition:.15s" id="key-icon-btn">⚙️</button>
+    <button class="chat-close" onclick="toggleChat()">×</button>
+  </div>
+
+  <!-- API KEY SETUP SCREEN -->
+  <div id="api-key-setup" style="display:none;padding:16px;flex-direction:column;gap:10px;border-bottom:1px solid var(--border);background:var(--bg3)">
+    <div style="font-size:13px;font-weight:600;color:var(--text)">🔑 AI API Key</div>
+
+    <!-- Provider selector -->
+    <div style="display:flex;gap:8px">
+      <button id="btn-gemini" onclick="selectProvider('gemini')"
+        style="flex:1;padding:8px;border-radius:9px;border:1.5px solid rgba(66,133,244,0.5);background:rgba(66,133,244,0.1);color:#60A5FA;font-size:12px;font-weight:600;cursor:pointer;transition:.15s">
+        🔵 Google Gemini<br><span style="font-size:10px;opacity:.7;font-weight:400">Bepul · AIza...</span>
+      </button>
+      <button id="btn-claude" onclick="selectProvider('claude')"
+        style="flex:1;padding:8px;border-radius:9px;border:1.5px solid var(--border);background:none;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;transition:.15s">
+        🟠 Claude<br><span style="font-size:10px;opacity:.7;font-weight:400">$5 · sk-ant-...</span>
+      </button>
+    </div>
+
+    <!-- Guide link -->
+    <div id="provider-guide" style="font-size:12px;color:var(--text2);background:var(--bg);border-radius:8px;padding:8px 10px;line-height:1.6">
+      <b style="color:#60A5FA">Gemini (bepul):</b><br>
+      1. <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent)">aistudio.google.com/apikey</a> ga kiring<br>
+      2. Google akkaunt bilan kiring<br>
+      3. <b>"Create API key"</b> → nusxalab oling
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <input id="api-key-input" type="password"
+        placeholder="AIza... yoki sk-ant-..."
+        style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:.2s"
+        onkeydown="if(event.key==='Enter')saveApiKey()"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border2)'">
+      <button onclick="saveApiKey()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:8px;padding:9px 16px;color:#000;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">Saqlash</button>
+    </div>
+    <div id="key-status-msg" style="font-size:11px;color:var(--text3)"></div>
+  </div>
+
+  <div class="chat-suggestions" id="chat-sugg">
+    <button class="sugg-btn" onclick="sendSugg(this)">Qaysi ATMlarda pul bor?</button>
+    <button class="sugg-btn" onclick="sendSugg(this)">Kritik ATMlar qaysilar?</button>
+    <button class="sugg-btn" onclick="sendSugg(this)">Bugungi inkassatsiya rejasi</button>
+    <button class="sugg-btn" onclick="sendSugg(this)">Eng ko'p talab yuqori ATM?</button>
+    <button class="sugg-btn" onclick="sendSugg(this)">ATM-001 holati qanday?</button>
+  </div>
+
+  <div class="chat-messages" id="chat-msgs">
+    <div class="chat-msg">
+      <div class="msg-avatar ai">
+        <svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.38-1 1.72V7h1a7 7 0 017 7h1v2h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2v-2h1a7 7 0 017-7h1V5.72c-.6-.34-1-.98-1-1.72a2 2 0 012-2M7.5 13A2.5 2.5 0 005 15.5 2.5 2.5 0 007.5 18a2.5 2.5 0 002.5-2.5A2.5 2.5 0 007.5 13m9 0a2.5 2.5 0 00-2.5 2.5 2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5-2.5A2.5 2.5 0 0016.5 13z"/></svg>
+      </div>
+      <div class="msg-bubble ai">
+        Salom! Men ATM tizimingizning AI yordamchisiman 🤖<br><br>
+        Naqd pul holati, inkassatsiya rejalari, bashoratlar va ATM statistikasi bo'yicha savollaringizga javob beraman.<br><br>
+        Qanday yordam kerak?
+        <div class="msg-time">Hozir</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input-area">
+    <div class="chat-input-wrap">
+      <textarea class="chat-textarea" id="chat-input" placeholder="Savol yozing... (Enter — yuborish)" rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="chat-send" id="chat-send-btn" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+    <div class="chat-footer">Powered by <span>Claude AI</span> · ATM ma'lumotlari real vaqtda</div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// PROVIDER & KEY MANAGEMENT
+// ════════════════════════════════════════
+let _apiKey    = localStorage.getItem('algorx_api_key')  || '';
+let _provider  = localStorage.getItem('algorx_provider') || 'gemini'; // 'gemini' | 'claude'
+
+function getApiKey()   { return _apiKey; }
+function getProvider() { return _provider; }
+
+// Auto-detect provider from key format
+function detectProvider(key){
+  if(key.startsWith('AIza')) return 'gemini';
+  if(key.startsWith('sk-ant-') || key.startsWith('sk-')) return 'claude';
+  return null;
+}
+
+// Provider UI selector
+function selectProvider(p){
+  _provider = p;
+  const guides = {
+    gemini:`<b style="color:#60A5FA">Gemini (bepul):</b><br>
+      1. <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent)">aistudio.google.com/apikey</a> ga kiring<br>
+      2. Google akkaunt bilan kiring<br>
+      3. <b>"Create API key"</b> → nusxalab oling`,
+    claude:`<b style="color:#FF8C00">Claude:</b><br>
+      1. <a href="https://console.anthropic.com/keys" target="_blank" style="color:var(--accent)">console.anthropic.com/keys</a> ga kiring<br>
+      2. $5 kredit to'lang<br>
+      3. <b>"Create Key"</b> → nusxalab oling`,
+  };
+  document.getElementById('provider-guide').innerHTML = guides[p];
+  document.getElementById('api-key-input').placeholder = p==='gemini'?'AIza...':'sk-ant-...';
+
+  // Highlight active button
+  document.getElementById('btn-gemini').style.cssText = p==='gemini'
+    ? 'flex:1;padding:8px;border-radius:9px;border:1.5px solid rgba(66,133,244,0.8);background:rgba(66,133,244,0.15);color:#60A5FA;font-size:12px;font-weight:600;cursor:pointer'
+    : 'flex:1;padding:8px;border-radius:9px;border:1.5px solid var(--border);background:none;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer';
+  document.getElementById('btn-claude').style.cssText = p==='claude'
+    ? 'flex:1;padding:8px;border-radius:9px;border:1.5px solid rgba(255,140,0,0.8);background:rgba(255,140,0,0.1);color:var(--warn);font-size:12px;font-weight:600;cursor:pointer'
+    : 'flex:1;padding:8px;border-radius:9px;border:1.5px solid var(--border);background:none;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer';
+}
+
+function showKeySetup(){
+  const el = document.getElementById('api-key-setup');
+  const isVisible = el.style.display === 'flex';
+  el.style.display = isVisible ? 'none' : 'flex';
+  if(!isVisible){
+    selectProvider(_provider);
+    document.getElementById('api-key-input').value = _apiKey;
+    document.getElementById('api-key-input').focus();
+  }
+}
+
+function saveApiKey(){
+  const val = document.getElementById('api-key-input').value.trim();
+  const detected = detectProvider(val);
+
+  if(!detected){
+    document.getElementById('key-status-msg').innerHTML =
+      '<span style="color:var(--danger)">❌ Noto\'g\'ri format. AIza... (Gemini) yoki sk-ant-... (Claude) bo\'lishi kerak</span>';
+    return;
+  }
+
+  _apiKey   = val;
+  _provider = detected;
+  localStorage.setItem('algorx_api_key',  val);
+  localStorage.setItem('algorx_provider', detected);
+
+  document.getElementById('api-key-setup').style.display = 'none';
+  document.getElementById('key-status-msg').innerHTML = '';
+
+  const label = detected==='gemini'?'🔵 Gemini Flash':'🟠 Claude Sonnet';
+  document.getElementById('chat-status-line').innerHTML =
+    `<div class="badge-dot"></div>Tayyor · ${label}`;
+  appendMsg('ai', `✅ ${label} ulandi! Savollaringizni yozing.`);
+}
+
+// Set initial UI state on load
+window.addEventListener('load', ()=>{
+  selectProvider(_provider);
+  if(_apiKey){
+    const label = _provider==='gemini'?'🔵 Gemini Flash':'🟠 Claude Sonnet';
+    document.getElementById('chat-status-line').innerHTML =
+      `<div class="badge-dot"></div>Tayyor · ${label}`;
+  } else {
+    document.getElementById('chat-status-line').innerHTML =
+      '<span style="color:var(--warn)">⚠ API key kerak — ⚙️ ni bosing</span>';
+  }
+});
+
+// ════════════════════════════════════════
+// UNIVERSAL AI CALL — Gemini & Claude
+// Retry + Rate limit cooldown built-in
+// ════════════════════════════════════════
+
+// Rate limit state
+let _rlUntil = 0;       // timestamp when cooldown ends
+let _rlTimer = null;    // interval for countdown display
+let _reqQueue = [];     // pending requests during cooldown
+
+function showRateLimit(seconds, msgId){
+  _rlUntil = Date.now() + seconds*1000;
+  clearInterval(_rlTimer);
+
+  // Show countdown in the message bubble
+  function tick(){
+    const left = Math.ceil((_rlUntil - Date.now())/1000);
+    if(left <= 0){
+      clearInterval(_rlTimer);
+      // Update status line
+      const label = _provider==='gemini'?'🔵 Gemini Flash':'🟠 Claude Sonnet';
+      document.getElementById('chat-status-line').innerHTML =
+        `<div class="badge-dot"></div>Tayyor · ${label}`;
+      // Flush queued requests
+      if(_reqQueue.length){
+        const next = _reqQueue.shift();
+        next();
+      }
+      return;
+    }
+    // Update status bar countdown
+    document.getElementById('chat-status-line').innerHTML =
+      `<span style="color:var(--warn)">⏳ Limit. ${left}s kutish...</span>`;
+    // Update message bubble if exists
+    if(msgId){
+      const el = document.getElementById(msgId);
+      if(el){
+        const b = el.querySelector('.msg-bubble');
+        if(b) b.innerHTML =
+          `<div style="display:flex;align-items:center;gap:8px">
+            <div style="width:30px;height:30px;border-radius:50%;border:2px solid var(--warn);border-top-color:transparent;animation:spin .8s linear infinite;flex-shrink:0"></div>
+            <div>
+              <div style="color:var(--warn);font-size:13px;font-weight:600">⏳ ${left} soniya...</div>
+              <div style="color:var(--text3);font-size:11px;margin-top:2px">Gemini limit. Avtomatik qayta urinadi</div>
+            </div>
+          </div>
+          <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+          <div class="msg-time">${getTime()}</div>`;
+      }
+    }
+  }
+  tick();
+  _rlTimer = setInterval(tick, 1000);
+}
+
+async function callAI(messages, systemPrompt='', maxTokens=1000, retries=2){
+  const key      = getApiKey();
+  const provider = getProvider();
+  if(!key) throw new Error('NO_KEY');
+
+  // Wait out active cooldown before sending
+  const waitLeft = _rlUntil - Date.now();
+  if(waitLeft > 0){
+    await new Promise(r => setTimeout(r, waitLeft + 200));
+  }
+
+  // ── GEMINI ──
+  if(provider === 'gemini'){
+    const geminiContents = messages.map(m=>({
+      role: m.role==='assistant' ? 'model' : 'user',
+      parts:[{text: typeof m.content==='string' ? m.content : JSON.stringify(m.content)}]
+    }));
+
+    const body = {
+      systemInstruction: systemPrompt ? {parts:[{text:systemPrompt}]} : undefined,
+      contents: geminiContents,
+      generationConfig:{ maxOutputTokens: maxTokens, temperature: 0.7 }
+    };
+    if(!systemPrompt) delete body.systemInstruction;
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }
+    );
+
+    // Rate limit → wait & retry automatically
+    if(res.status === 429){
+      const retryAfter = parseInt(res.headers.get('Retry-After') || '60');
+      const wait = Math.min(retryAfter || 60, 90); // max 90s wait
+      if(retries > 0){
+        throw new Error('RATE_LIMIT_RETRY:'+wait);
+      }
+      throw new Error('RATE_LIMIT');
+    }
+
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      const msg = err?.error?.message || '';
+      if(res.status===400||msg.includes('API_KEY')) throw new Error('INVALID_KEY');
+      throw new Error(msg || 'GEMINI_ERROR');
+    }
+
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '(Javob kelmadi)';
+    return { content:[{text}] };
+  }
+
+  // ── CLAUDE ──
+  const body = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: maxTokens,
+    messages,
+  };
+  if(systemPrompt) body.system = systemPrompt;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': key,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if(res.status===429) throw new Error('RATE_LIMIT');
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    if(res.status===401) throw new Error('INVALID_KEY');
+    throw new Error(err?.error?.message || 'CLAUDE_ERROR');
+  }
+  return res.json();
+}
+
+// Wrapper that handles RATE_LIMIT_RETRY automatically
+async function callAIWithRetry(messages, systemPrompt, maxTokens, typingId){
+  try{
+    return await callAI(messages, systemPrompt, maxTokens);
+  }catch(e){
+    if(e.message && e.message.startsWith('RATE_LIMIT_RETRY:')){
+      const waitSec = parseInt(e.message.split(':')[1]) || 60;
+      showRateLimit(waitSec, typingId);
+      // Wait then retry once
+      await new Promise(r => setTimeout(r, waitSec*1000 + 500));
+      return await callAI(messages, systemPrompt, maxTokens, 0);
+    }
+    throw e;
+  }
+}
+
+// Error message helper
+function aiErrMsg(e){
+  if(e.message==='NO_KEY')        return '🔑 API key kiritilmagan. ⚙️ tugmasini bosing.';
+  if(e.message==='INVALID_KEY')   return '❌ API key noto\'g\'ri. ⚙️ dan to\'g\'ri key kiriting.';
+  if(e.message==='RATE_LIMIT')    return '⏳ Limit tugdi. 1 daqiqa kutib, qaytadan urinib ko\'ring.';
+  if(e.message?.includes('Failed to fetch')) return '🌐 Internet aloqasi yo\'q.';
+  return `⚠️ Xato: ${e.message||'Qaytadan urinib ko\'ring.'}`;
+}
+
+// ════════════════════════════════════════
+// SYSTEM PROMPT
+// ════════════════════════════════════════
+const ATM_SYSTEM_PROMPT = `Siz O'zbekiston banki ATM monitoring tizimining aqlli AI yordamchisisiz. 
+Faqat O'zbek tilida javob bering. Qisqa, aniq va professional javoblar bering.
+Raqamlarni ko'rsatganda har doim so'm va foiz belgisidan foydalaning.
+
+JORIY ATM MA'LUMOTLARI (real vaqt):
+${JSON.stringify(atms.map(a=>({
+  id:a.id, nom:a.name, manzil:a.addr,
+  naqd_daraja:a.cash+'%', qoldiq:a.balance+'M so\'m',
+  holat:a.status==='ok'?'Yetarli':a.status==='warn'?'Ogohlantirish':'Kritik/Tugagan',
+  bashorat:a.forecast, kunlik_chiqim:a.balance*2+'M so\'m',
+  oxirgi_tokolish:a.lastFill
+})),null,2)}
+
+Jami: 18 ATM | Yetarli: ${atms.filter(a=>a.status==='ok').length} | Ogohlantirish: ${atms.filter(a=>a.status==='warn').length} | Kritik: ${atms.filter(a=>a.status==='danger'||a.status==='offline').length}
+
+Inkassatsiya uchun optimal tartib: avval eng kam naqd ATMlardan boshlang.
+Markdown formatlashdan foydalaning (**, -, ## va h.k.).`;
+
+// ════════════════════════════════════════
+// CHAT UI LOGIC
+// ════════════════════════════════════════
+let chatHistory = [];
+let isSending   = false;
+
+function toggleChat(){
+  const panel = document.getElementById('chat-panel');
+  panel.classList.toggle('open');
+  document.getElementById('chat-unread').style.display = 'none';
+  if(panel.classList.contains('open')){
+    if(!getApiKey()) setTimeout(()=>showKeySetup(), 400);
+    else setTimeout(()=>document.getElementById('chat-input').focus(), 350);
+  }
+}
+
+function sendSugg(btn){
+  if(!getApiKey()){showKeySetup();return;}
+  document.getElementById('chat-input').value = btn.textContent;
+  sendMessage();
+}
+
+function handleKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
+}
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
+function getTime(){
+  return new Date().toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
+}
+
+function appendMsg(role, text, typing=false){
+  const msgs = document.getElementById('chat-msgs');
+  const isAI = role==='ai';
+  const id   = 'msg-'+Date.now();
+  msgs.innerHTML += `<div class="chat-msg ${role}" id="${id}">
+    ${isAI
+      ? `<div class="msg-avatar ai"><svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2c0 .74-.4 1.38-1 1.72V7h1a7 7 0 017 7h1v2h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2v-2h1a7 7 0 017-7h1V5.72c-.6-.34-1-.98-1-1.72a2 2 0 012-2M7.5 13A2.5 2.5 0 005 15.5 2.5 2.5 0 007.5 18a2.5 2.5 0 002.5-2.5A2.5 2.5 0 007.5 13m9 0a2.5 2.5 0 00-2.5 2.5 2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5-2.5A2.5 2.5 0 0016.5 13z"/></svg></div>`
+      : `<div class="msg-avatar user">AD</div>`}
+    <div class="msg-bubble ${role}">
+      ${typing
+        ? `<div class="typing-dots"><span></span><span></span><span></span></div>`
+        : markdownToHtml(text)}
+      ${typing ? '' : `<div class="msg-time">${getTime()}</div>`}
+    </div>
+    ${!isAI ? `<div class="msg-avatar user" style="opacity:0"></div>` : ''}
+  </div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function updateMsg(id, text){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.querySelector('.msg-bubble').innerHTML =
+    markdownToHtml(text) + `<div class="msg-time">${getTime()}</div>`;
+  document.getElementById('chat-msgs').scrollTop = 9999;
+}
+
+function markdownToHtml(text){
+  return text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/`(.*?)`/g,`<code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:12px">$1</code>`)
+    .replace(/^### (.*)/gm,'<div style="font-weight:600;color:var(--accent);margin:6px 0 3px;font-size:13px">$1</div>')
+    .replace(/^## (.*)/gm,'<div style="font-weight:700;color:var(--text);margin:8px 0 4px;font-size:14px">$1</div>')
+    .replace(/^- (.*)/gm,'<div style="display:flex;gap:6px;margin:2px 0"><span style="color:var(--accent)">▸</span><span>$1</span></div>')
+    .replace(/\n/g,'<br>');
+}
+
+async function sendMessage(){
+  if(isSending) return;
+  if(!getApiKey()){
+    showKeySetup();
+    appendMsg('ai','⚙️ Avval API key kiriting (⚙️ tugma).');
+    return;
+  }
+  const inp = document.getElementById('chat-input');
+  const txt = inp.value.trim();
+  if(!txt) return;
+
+  isSending = true;
+  inp.value = ''; inp.style.height = 'auto';
+  document.getElementById('chat-send-btn').disabled = true;
+
+  appendMsg('user', txt);
+  chatHistory.push({role:'user', content:txt});
+  const typingId = appendMsg('ai','',true);
+
+  try{
+    const data  = await callAIWithRetry(chatHistory, ATM_SYSTEM_PROMPT, 1000, typingId);
+    const reply = data.content?.[0]?.text || 'Kechirasiz, javob kelmadi.';
+    chatHistory.push({role:'assistant', content:reply});
+    updateMsg(typingId, reply);
+  }catch(e){
+    updateMsg(typingId, aiErrMsg(e));
+  }
+
+  isSending = false;
+  document.getElementById('chat-send-btn').disabled = false;
+  inp.focus();
+}
+
+// ════════════════════════════════════════
+// AI FORECAST (Bashorat paneli)
+// ════════════════════════════════════════
+async function genAiForecast(){
+  if(!getApiKey()){ toggleChat(); showKeySetup(); return; }
+
+  const btns = document.querySelectorAll('[onclick="genAiForecast()"]');
+  btns.forEach(b=>{b.textContent='⏳ Tahlil...';b.disabled=true;});
+
+  const el = document.getElementById('fc-ai-content');
+  el.innerHTML = `<div style="display:flex;gap:4px;padding:8px 0">
+    <span style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:typeDot 1.2s ease infinite 0s;display:inline-block"></span>
+    <span style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:typeDot 1.2s ease infinite .2s;display:inline-block"></span>
+    <span style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:typeDot 1.2s ease infinite .4s;display:inline-block"></span>
+  </div>`;
+
+  const prompt = `Quyidagi ATM ma'lumotlari asosida 7 kunlik bashorat tahlilini O'zbek tilida yoz.
+Har bo'limni emoji bilan boshla. 250-300 so'z:
+- Umumiy holat tahlili
+- Eng xavfli ATMlar ro'yxati  
+- Inkassatsiya rejasi tavsiyasi
+- Hafta oxiri uchun tavsiyalar
+
+ATM holati: ${JSON.stringify(atms.map(a=>({id:a.id,naqd:a.cash+'%',holat:a.status,bashorat:a.forecast})))}`;
+
+  try{
+    const data = await callAIWithRetry([{role:'user',content:prompt}], '', 700, null);
+    el.innerHTML = markdownToHtml(data.content?.[0]?.text || 'Xato yuz berdi');
+  }catch(e){
+    el.innerHTML = `<span style="color:var(--warn)">${aiErrMsg(e)}</span>`;
+  }
+  btns.forEach(b=>{b.textContent='Yangilash ↻';b.disabled=false;});
+}
+</script>
+</body>
+</html>
