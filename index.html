@@ -963,8 +963,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
   #route-map{min-height:280px !important;height:280px}
   #route-cards-panel{width:100% !important;border-left:none;border-top:1px solid var(--border);max-height:none}
 }
+.bank-tooltip{background:rgba(26,115,232,.95)!important;color:white!important;border:none!important;font-weight:600;font-size:12px;padding:4px 10px!important;border-radius:99px!important;}
+.bank-tooltip::before{display:none!important}
+.turn-tooltip{background:rgba(15,23,42,.9)!important;color:white!important;border:none!important;font-size:11px;font-weight:500;padding:3px 8px!important;border-radius:6px!important;}
+.turn-tooltip::before{display:none!important}
 </style>
-</head>
 <body>
 
 <!-- ===== LOGIN ===== -->
@@ -1846,7 +1849,7 @@ function openATMDetail(id){
     mapDiv.style.cssText='width:100%;height:200px';
     container.appendChild(mapDiv);
     modalMiniMap=L.map(mapDiv,{zoomControl:true,attributionControl:false,scrollWheelZoom:false}).setView([atm.lat,atm.lng],15);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(modalMiniMap);
+    L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=AIzaSyDv9j-RLXWt66MEpAuEm-yLHGaX-qRzLwo',{maxZoom:20,subdomains:['mt0','mt1','mt2','mt3']}).addTo(modalMiniMap);
     // Pulsing circle for problem ATMs
     if(atm.status!=='ok'){
       L.circleMarker([atm.lat,atm.lng],{radius:22,color:c,fillColor:c,fillOpacity:0.15,weight:2,dashArray:'6,4'}).addTo(modalMiniMap);
@@ -1991,7 +1994,7 @@ function renderMiniList(activeId){
 let mapDash;
 function initMap(){
   mapDash = L.map('map',{zoomControl:true, attributionControl:false}).setView([41.307, 69.255], 14);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapDash);
+  L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=AIzaSyDv9j-RLXWt66MEpAuEm-yLHGaX-qRzLwo',{maxZoom:20,subdomains:['mt0','mt1','mt2','mt3']}).addTo(mapDash);
 
   atms.forEach(atm => {
     const m = L.marker([atm.lat, atm.lng], {icon: makeIcon(atm.status, atm.cash)})
@@ -2027,7 +2030,7 @@ function openATMOnMap(id){
 let mapFull, mapFullInitialized = false;
 function initMapFull(){
   mapFull = L.map('map-full',{zoomControl:true, attributionControl:false}).setView([41.307,69.255],14);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapFull);
+  L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=AIzaSyDv9j-RLXWt66MEpAuEm-yLHGaX-qRzLwo',{maxZoom:20,subdomains:['mt0','mt1','mt2','mt3']}).addTo(mapFull);
   atms.forEach(atm => {
     L.marker([atm.lat, atm.lng], {icon: makeIcon(atm.status, atm.cash)})
       .addTo(mapFull)
@@ -2342,43 +2345,193 @@ function clearRouteMap(){
 }
 function initRouteMap(){
   routeMap=L.map("route-map",{zoomControl:true,attributionControl:false}).setView([41.307,69.255],14);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{maxZoom:19}).addTo(routeMap);
+  L.tileLayer("https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=AIzaSyDv9j-RLXWt66MEpAuEm-yLHGaX-qRzLwo",{maxZoom:20,subdomains:['mt0','mt1','mt2','mt3']}).addTo(routeMap);
   routeInitialized=true;
 }
 
 function drawRouteMap(route,center,wknd,legs){
   clearRouteMap();
+
+  // Fon ATMlar (routedan tashqari)
   atms.forEach(a=>{
     if(route.find(r=>r.id===a.id)||a.daysLeft>7)return;
     const dc=a.daysLeft<=1?"#FF4B6E":a.daysLeft<=3?"#FF8C00":"#0088FF";
     const m=L.circleMarker([a.lat,a.lng],{radius:7,color:dc,fillColor:dc,fillOpacity:.25,weight:1.5}).addTo(routeMap);
     m.bindTooltip(`${a.name} · ${a.daysLeft} kun`,{sticky:true});routeMarkers.push(m);
   });
-  const cm=L.marker([center.lat,center.lng],{icon:L.divIcon({html:"<div style=\"width:16px;height:16px;border-radius:50%;background:white;border:3px solid #0088FF;box-shadow:0 0 0 5px rgba(0,136,255,.2)\"></div>",className:"",iconSize:[16,16],iconAnchor:[8,8]})}).addTo(routeMap);
-  cm.bindTooltip("🏦 "+center.name,{permanent:false,direction:"top"});routeMarkers.push(cm);
-  const lls=[[center.lat,center.lng],...route.map(a=>[a.lat,a.lng])];
-  const pl=L.polyline(lls,{color:"#00E5C3",weight:3.5,opacity:.85,dashArray:"12,7"}).addTo(routeMap);
-  routePolylines.push(pl);
-  route.forEach((a,i)=>{
-    const from=i===0?[center.lat,center.lng]:[route[i-1].lat,route[i-1].lng];
-    const mid=[(from[0]+a.lat)/2,(from[1]+a.lng)/2];
-    const lm=L.marker(mid,{icon:L.divIcon({html:`<div style="background:rgba(10,30,61,.88);border:1px solid rgba(0,229,195,.3);color:#00E5C3;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap">${legs[i].km}km · ${legs[i].min}min</div>`,className:"",iconSize:null}),interactive:false,zIndexOffset:-100}).addTo(routeMap);
-    routeMarkers.push(lm);
-  });
-  route.filter(a=>a.daysLeft<=1).forEach(a=>{
-    const c=L.circleMarker([a.lat,a.lng],{radius:28,color:"#FF4B6E",fillColor:"#FF4B6E",fillOpacity:.07,weight:1.5,dashArray:"5,4"}).addTo(routeMap);
-    routeCircles.push(c);
-  });
+
+  // Bank markazi
+  const cm=L.marker([center.lat,center.lng],{icon:L.divIcon({html:"<div style=\"width:18px;height:18px;border-radius:50%;background:white;border:3px solid #1A73E8;box-shadow:0 0 0 6px rgba(26,115,232,.2)\"></div>",className:"",iconSize:[18,18],iconAnchor:[9,9]})}).addTo(routeMap);
+  cm.bindTooltip("🏦 "+center.name,{permanent:true,direction:"top",className:"bank-tooltip"});
+  routeMarkers.push(cm);
+
+  // ATM markerlar
   route.forEach((atm,i)=>{
     const c=ROUTE_COLORS[i],lbl=ROUTE_LABELS[i],fill=Math.round(atm.needFill*wknd.mult);
-    const icon=L.divIcon({html:`<div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 3px 8px rgba(0,0,0,.45))"><div style="min-width:54px;padding:5px 10px;background:${c};color:white;border-radius:10px;border:2.5px solid rgba(255,255,255,.85);text-align:center"><div style="font-size:16px;font-weight:900;line-height:1.1">${lbl}</div><div style="font-size:10px;opacity:.9;margin-top:1px">${fill}m</div></div><div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid ${c}"></div></div>`,className:"",iconSize:[60,52],iconAnchor:[30,52],popupAnchor:[0,-54]});
+    if(atm.daysLeft<=1){
+      const circ=L.circleMarker([atm.lat,atm.lng],{radius:30,color:"#FF4B6E",fillColor:"#FF4B6E",fillOpacity:.07,weight:1.5,dashArray:"5,4"}).addTo(routeMap);
+      routeCircles.push(circ);
+    }
+    const icon=L.divIcon({html:`<div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 3px 10px rgba(0,0,0,.35))"><div style="min-width:58px;padding:6px 12px;background:${c};color:white;border-radius:12px;border:2.5px solid white;text-align:center;${atm.daysLeft<=1?'animation:urgPulse 1.3s ease infinite;':''}"><div style="font-size:17px;font-weight:900;line-height:1.1">${lbl}</div><div style="font-size:10px;opacity:.9;margin-top:1px">${fill}m</div></div><div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid ${c}"></div></div>`,className:"",iconSize:[64,56],iconAnchor:[32,56],popupAnchor:[0,-58]});
     const m=L.marker([atm.lat,atm.lng],{icon,zIndexOffset:500}).addTo(routeMap)
-      .bindPopup(`<div style="font-family:"DM Sans",sans-serif;min-width:220px;padding:4px"><b style="font-size:14px;color:#111">${lbl}. ${atm.name}</b><div style="font-size:12px;color:#666;margin:4px 0 8px">📍 ${atm.addr}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div style="background:#f8f9fa;border-radius:7px;padding:7px;text-align:center"><div style="font-size:10px;color:#888">Naqd qoldi</div><div style="font-size:18px;font-weight:700;color:${c}">${atm.cash}%</div></div><div style="background:#f8f9fa;border-radius:7px;padding:7px;text-align:center"><div style="font-size:10px;color:#888">Qolgan vaqt</div><div style="font-size:18px;font-weight:700;color:${c}">${atm.daysLeft}k</div></div></div><div style="margin-top:7px;font-size:11px;color:#888">Leg ${i+1}: ${legs[i].km}km · ~${legs[i].min} daqiqa</div></div>`,{maxWidth:260});
+      .bindPopup(`<div style="font-family:'DM Sans',sans-serif;min-width:240px;padding:4px">
+        <div style="font-weight:700;font-size:15px;color:#111;margin-bottom:3px">${lbl}. ${atm.name}</div>
+        <div style="font-size:12px;color:#555;margin-bottom:10px">📍 ${atm.addr}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div style="background:#f1f5f9;border-radius:8px;padding:8px;text-align:center">
+            <div style="font-size:10px;color:#888">Naqd qoldi</div>
+            <div style="font-size:20px;font-weight:700;color:${c}">${atm.cash}%</div>
+          </div>
+          <div style="background:#f1f5f9;border-radius:8px;padding:8px;text-align:center">
+            <div style="font-size:10px;color:#888">Qolgan vaqt</div>
+            <div style="font-size:20px;font-weight:700;color:${c}">${atm.daysLeft} kun</div>
+          </div>
+          <div style="background:#f1f5f9;border-radius:8px;padding:8px;text-align:center">
+            <div style="font-size:10px;color:#888">Quyish kerak</div>
+            <div style="font-size:14px;font-weight:700">${atm.needFill} mln</div>
+          </div>
+          <div style="background:#FFF3E0;border-radius:8px;padding:8px;text-align:center">
+            <div style="font-size:10px;color:#E65100">Dam olish +</div>
+            <div style="font-size:14px;font-weight:700;color:#E65100">${fill} mln</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:#888">🛣 Leg ${i+1}: ${legs[i].km} km · ~${legs[i].min} daqiqa haydash</div>
+      </div>`,{maxWidth:280});
     routeMarkers.push(m);
   });
-  try{routeMap.fitBounds(L.latLngBounds(lls).pad(.2));}catch(e){}
+
+  // Dastlab to'g'ri chiziq ko'rsat (fallback)
+  const stops=[center,...route];
+  const straightLls=stops.map(s=>[s.lat,s.lng]);
+  const fallbackPl=L.polyline(straightLls,{color:"#1A73E8",weight:4,opacity:.4,dashArray:"8,6"}).addTo(routeMap);
+  routePolylines.push(fallbackPl);
+
+  // Bounds
+  try{routeMap.fitBounds(L.latLngBounds(straightLls).pad(.22));}catch(e){}
   setTimeout(()=>routeMap.invalidateSize(),150);
+
+  // Real yo'l: OSRM API (bepul, real ko'cha marshrutiлар)
+  fetchRealRoad(stops, wknd, legs);
 }
+
+// OSRM (Open Source Routing Machine) — real ko'cha yo'llari
+async function fetchRealRoad(stops, wknd, legs){
+  try{
+    // Koordinatlarni OSRM formatiga o'tkazish: lng,lat;lng,lat;...
+    const coords=stops.map(s=>`${s.lng},${s.lat}`).join(';');
+    const url=`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true&annotations=false`;
+
+    const res=await fetch(url);
+    if(!res.ok) throw new Error('OSRM xatosi');
+    const data=await res.json();
+
+    if(!data.routes||!data.routes[0]) throw new Error('Yo\'l topilmadi');
+
+    const geom=data.routes[0].geometry; // GeoJSON LineString
+    const totalMeters=data.routes[0].distance;
+    const totalSeconds=data.routes[0].duration;
+
+    // Eski to'g'ri chiziqlarni o'chir
+    routePolylines.forEach(p=>{try{routeMap.removeLayer(p);}catch(e){}});
+    routePolylines=[];
+
+    // Real yo'lni chiz
+    const roadLayer=L.geoJSON(geom,{
+      style:{
+        color:'#1A73E8',
+        weight:5,
+        opacity:.85,
+        lineCap:'round',
+        lineJoin:'round'
+      }
+    }).addTo(routeMap);
+
+    // Yo'l ustiga oq outline (xaritada yaxshi ko'rinish uchun)
+    const roadOutline=L.geoJSON(geom,{
+      style:{
+        color:'white',
+        weight:8,
+        opacity:.35,
+        lineCap:'round',
+        lineJoin:'round'
+      }
+    }).addTo(routeMap);
+
+    routePolylines.push(roadOutline, roadLayer);
+
+    // Burilish nuqtalarini ko'rsat
+    const steps=data.routes[0].legs?.flatMap(leg=>leg.steps||[])||[];
+    let turnCount=0;
+    steps.forEach(step=>{
+      if(!step.maneuver||step.maneuver.type==='depart'||step.maneuver.type==='arrive')return;
+      if(turnCount>12)return; // max 12 ta ko'rsatma
+      const [lng,lat]=step.maneuver.location;
+      const turnType=step.maneuver.type;
+      const modifier=step.maneuver.modifier||'';
+      const street=step.name||'';
+
+      // Burilish emoji
+      let emoji='↑';
+      if(modifier==='left'||modifier==='sharp left')emoji='←';
+      else if(modifier==='right'||modifier==='sharp right')emoji='→';
+      else if(modifier==='slight left')emoji='↖';
+      else if(modifier==='slight right')emoji='↗';
+      else if(turnType==='roundabout')emoji='🔄';
+      else if(turnType==='turn')emoji=modifier.includes('left')?'←':'→';
+
+      const turnIcon=L.divIcon({
+        html:`<div style="background:white;border:2px solid #1A73E8;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 2px 6px rgba(0,0,0,.25);font-weight:700;color:#1A73E8">${emoji}</div>`,
+        className:'',iconSize:[22,22],iconAnchor:[11,11]
+      });
+      const tm=L.marker([lat,lng],{icon:turnIcon,zIndexOffset:200,interactive:true}).addTo(routeMap);
+      if(street) tm.bindTooltip(emoji+' '+street,{sticky:true,className:'turn-tooltip'});
+      routeMarkers.push(tm);
+      turnCount++;
+    });
+
+    // Leg masofa labellarini real ma'lumotlar bilan yangilash
+    const realLegs=data.routes[0].legs||[];
+    realLegs.forEach((leg,i)=>{
+      if(i>=legs.length)return;
+      const km=(leg.distance/1000).toFixed(2);
+      const min=Math.ceil(leg.duration/60);
+      legs[i].km=km;
+      legs[i].min=min;
+      // Leg labelini xaritaga qo'shish — leg o'rtasida
+      const fromStop=stops[i],toStop=stops[i+1];
+      const mid=[(fromStop.lat+toStop.lat)/2,(fromStop.lng+toStop.lng)/2];
+      const lm=L.marker(mid,{
+        icon:L.divIcon({
+          html:`<div style="background:rgba(26,115,232,.92);color:white;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;border:1.5px solid rgba(255,255,255,.6);box-shadow:0 2px 6px rgba(0,0,0,.25)">${km}km · ${min}min</div>`,
+          className:'',iconSize:null
+        }),
+        interactive:false,zIndexOffset:300
+      }).addTo(routeMap);
+      routeMarkers.push(lm);
+    });
+
+    // Summary yangilash
+    const totalKm=(totalMeters/1000).toFixed(1);
+    const totalMin=Math.ceil(totalSeconds/60);
+    const totalBase=stops.slice(1).reduce((s,a)=>s+(a.needFill||0),0);
+    const wkndMult=wknd?.mult||1;
+    const totalWknd=Math.round(totalBase*wkndMult);
+    document.getElementById("route-summary").innerHTML=`
+      <div class="sum-pill"><div class="sum-pill-val">${stops.length-1}</div><div class="sum-pill-label">ATM</div></div>
+      <div class="sum-pill"><div class="sum-pill-val">${totalKm} km</div><div class="sum-pill-label">Haqiqiy masofa</div></div>
+      <div class="sum-pill"><div class="sum-pill-val">~${totalMin} min</div><div class="sum-pill-label">Haydash vaqti</div></div>
+      <div class="sum-pill"><div class="sum-pill-val">${totalBase} mln</div><div class="sum-pill-label">Asosiy pul</div></div>
+      <div class="sum-pill"><div class="sum-pill-val" style="color:var(--accent3)">${totalWknd} mln</div><div class="sum-pill-label">Dam olish bilan</div></div>`;
+
+    // Fit real road bounds
+    try{routeMap.fitBounds(roadLayer.getBounds().pad(.15));}catch(e){}
+
+  }catch(err){
+    console.warn('OSRM real road failed, using straight lines:', err.message);
+    // Fallback: to'g'ri chiziq saqlanib turadi — hech narsa qilmaymiz
+  }
+}
+
 
 function renderRouteCards(route,wknd,legs){
   const html=route.map((atm,i)=>{
