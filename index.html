@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flow AI — Aqlli ATM Bashorat Tizimi</title>
+<title>ATM Flow AI — Aqlli Inkassatsiya Tizimi</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -597,15 +597,96 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
 .user-email{font-size:11px;color:var(--text3)}
 .sys-row{display:flex;align-items:center;justify-content:space-between;padding:2px 0}
 
-/* ── ATM Analytics Panel (dashboard map) ── */
-.ap-tab{
-  flex:1;padding:8px 4px;background:none;border:none;
-  color:var(--text3);font-size:11px;font-family:var(--sans);
-  cursor:pointer;border-bottom:2px solid transparent;
-  transition:all .15s;white-space:nowrap;
+/* ── Auto-Info Side Panel (dashboard map) ── */
+.map-info-wrap{display:flex;flex:1;min-height:320px;overflow:hidden;position:relative}
+.map-info-panel{
+  width:300px;flex-shrink:0;
+  background:var(--bg2);border-left:1px solid var(--border2);
+  display:flex;flex-direction:column;overflow-y:auto;
+  transition:width .3s ease;
 }
+.info-atm-header{padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg3);flex-shrink:0}
+.info-atm-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info-atm-addr{font-size:11px;color:var(--text3)}
+.info-cash-section{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.info-cash-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.info-cash-big{font-family:var(--mono);font-size:28px;font-weight:700}
+.info-bar{height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;margin-bottom:6px}
+.info-bar-fill{height:100%;border-radius:5px;transition:width .5s}
+.info-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.info-stat{background:var(--bg3);border-radius:8px;padding:8px 10px;border:1px solid var(--border)}
+.info-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.info-stat-val{font-size:13px;font-weight:600;color:var(--text)}
+
+/* 1 kun qoldi banner */
+.urgent-banner{
+  margin:10px 14px;padding:9px 12px;
+  background:rgba(255,75,110,.12);border:1px solid rgba(255,75,110,.4);
+  border-radius:9px;font-size:12px;font-weight:600;color:var(--danger);
+  display:flex;align-items:center;gap:7px;animation:urgPulse 1.5s ease infinite;
+}
+@keyframes urgPulse{0%,100%{border-color:rgba(255,75,110,.4)}50%{border-color:rgba(255,75,110,.9)}}
+
+/* Route trip card */
+.trip-section{padding:10px 14px;flex:1}
+.trip-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;font-weight:600}
+.trip-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;margin-bottom:8px;
+}
+.trip-header{
+  padding:9px 12px;background:var(--bg3);
+  display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--border);
+}
+.trip-num{
+  width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#000;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.trip-title{font-size:12px;font-weight:600;color:var(--text);flex:1}
+.trip-total{font-size:11px;color:var(--accent);font-family:var(--mono)}
+.trip-atm-row{
+  padding:8px 12px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid rgba(26,58,92,.4);
+}
+.trip-atm-row:last-child{border:none}
+.trip-order{
+  width:20px;height:20px;border-radius:5px;flex-shrink:0;
+  background:var(--bg3);color:var(--text3);
+  font-size:11px;font-weight:700;font-family:var(--mono);
+  display:flex;align-items:center;justify-content:center;
+}
+.trip-atm-info{flex:1;min-width:0}
+.trip-atm-name{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trip-atm-days{font-size:10px}
+.trip-atm-fill{font-size:11px;font-family:var(--mono);font-weight:600;white-space:nowrap}
+.nav-mini-btns{display:flex;gap:5px;padding:8px 12px;border-top:1px solid var(--border)}
+.nav-mini-btn{flex:1;padding:6px;border-radius:7px;border:none;cursor:pointer;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px;text-decoration:none;transition:.15s}
+.nav-mini-btn:hover{opacity:.85}
+.nav-mini-btn.g{background:#1A73E8;color:white}
+.nav-mini-btn.y{background:#FC3F1D;color:white}
+
+/* All ATMs mini list */
+.atm-mini-list{padding:0 14px 14px;overflow-y:auto}
+.atm-mini-item{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 0;border-bottom:1px solid rgba(26,58,92,.4);
+  cursor:pointer;transition:.12s;
+}
+.atm-mini-item:hover{opacity:.8}
+.atm-mini-item:last-child{border:none}
+.atm-mini-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.atm-mini-name{font-size:11px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.atm-mini-pct{font-family:var(--mono);font-size:11px;font-weight:700;min-width:32px;text-align:right}
+.atm-mini-days{font-size:10px;color:var(--text3);min-width:50px;text-align:right}
+
+/* AP tabs */
+.ap-tab{flex:1;padding:8px 4px;background:none;border:none;color:var(--text3);font-size:11px;font-family:var(--sans);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
 .ap-tab:hover{color:var(--text2)}
 .ap-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
 
 /* ── ATM Detail Modal ── */
 .atm-modal-overlay{
@@ -843,6 +924,45 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
   .ai-body{grid-template-columns:1fr}
   .modal-nav-btns{grid-template-columns:1fr}
 }
+
+/* ── Route ATM Card ── */
+.route-atm-card{margin:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.route-atm-card.urgent{border-color:rgba(255,75,110,.4)}
+.route-atm-card.warn-card{border-color:rgba(255,140,0,.3)}
+.route-card-top{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.route-letter{width:36px;height:36px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;font-family:var(--display);color:white}
+.route-card-info{flex:1;min-width:0}
+.route-card-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.route-card-addr{font-size:11px;color:var(--text3)}
+.route-card-days{font-size:11px;font-weight:600;white-space:nowrap}
+.route-card-mid{padding:10px 14px;border-bottom:1px solid var(--border)}
+.route-fill-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.route-fill-label{font-size:11px;color:var(--text3)}
+.route-fill-amt{font-family:var(--mono);font-size:20px;font-weight:700}
+.route-fill-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.route-fill-fill{height:100%;border-radius:3px}
+.route-card-bottom{padding:10px 14px;display:flex;gap:7px;flex-wrap:wrap}
+.route-nav-btn{flex:1;min-width:80px;padding:8px 6px;border-radius:9px;border:none;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;text-decoration:none;transition:.15s}
+.route-nav-btn:hover{opacity:.85}
+.route-nav-btn.g{background:#1A73E8;color:white}
+.route-nav-btn.y{background:#FC3F1D;color:white}
+.route-nav-btn.qr-btn{background:var(--bg3);border:1px solid var(--border2);color:var(--text2)}
+.qr-modal{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.qr-modal.open{display:flex}
+.qr-box{background:var(--bg2);border:1px solid var(--border2);border-radius:18px;padding:24px;text-align:center;max-width:310px;width:92%}
+.qr-box-title{font-size:15px;font-weight:700;margin-bottom:3px;color:var(--text)}
+.qr-box-sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+#qr-canvas-wrap canvas{border-radius:8px;border:4px solid white;display:block;margin:0 auto}
+.qr-info{background:var(--bg3);border-radius:9px;padding:10px 14px;margin:14px 0;text-align:left;font-size:12px;color:var(--text2);line-height:1.7}
+.qr-close-btn{width:100%;padding:10px;border-radius:10px;background:rgba(0,229,195,.1);border:1px solid rgba(0,229,195,.3);color:var(--accent);font-size:14px;font-weight:600;cursor:pointer}
+.sum-pill{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;text-align:center;min-width:90px}
+.sum-pill-val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--accent)}
+.sum-pill-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+@media(max-width:768px){
+  #route-main-wrap{flex-direction:column}
+  #route-map{min-height:280px !important;height:280px}
+  #route-cards-panel{width:100% !important;border-left:none;border-top:1px solid var(--border);max-height:none}
+}
 </style>
 </head>
 <body>
@@ -857,7 +977,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
       <div class="login-logo-icon">
         <svg viewBox="0 0 24 24"><path d="M3 10h18v2H3v-2zm2-4h14v2H5V6zm4 8h6v2H9v-2zM1 14h22v8H1v-8zM12 2L4 6h16L12 2z"/></svg>
       </div>
-      <div class="login-logo-text">ALGO<span style="color:var(--accent)">RX</span></div>
+      <div class="login-logo-text">ATM <span style="color:var(--accent)">Flow AI</span></div>
     </div>
     <div class="login-title">Xush kelibsiz</div>
     <div class="login-subtitle">Aqlli ATM boshqaruv tizimiga kiring</div>
@@ -912,9 +1032,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
         <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
         ATM Ro'yxati
       </button>
+      <button class="nav-btn" onclick="showPanel('route-panel',this)">
+        <svg viewBox="0 0 24 24"><path d="M1 5h4v4H1zm8-4h4v4H9zm8 4h4v4h-4zm-8 4h4v4H9zm-8 4h4v4H1zm16 0h4v4h-4zm-8 4h4v4H9zm-8 4h4v4H1zm16 0h4v4h-4z"/></svg>
+        Marshrut
+      </button>
     </div>
-
-    <div class="topbar-sep"></div>
     <div class="topbar-user">
       <div class="user-avatar">AD</div>
       <span class="user-name">Admin</span>
@@ -939,6 +1061,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
         <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
         ATM Ro'yxati
         <span class="sidebar-badge">3</span>
+      </div>
+
+      <div class="sidebar-item" onclick="showPanel('route-panel',null);setActive(this)">
+        <svg viewBox="0 0 24 24"><path d="M1 5h4v4H1zm8-4h4v4H9zm8 4h4v4h-4zm-8 4h4v4H9zm-8 4h4v4H1zm16 0h4v4h-4zm-8 4h4v4H9zm-8 4h4v4H1zm16 0h4v4h-4z"/></svg>
+        Marshrut Rejasi
       </div>
 
       <div class="sidebar-section">Tahlil</div>
@@ -1004,93 +1131,95 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
         </div>
 
         <div class="mid-section">
-          <!-- MAP + ATM ANALYTICS PANEL -->
+          <!-- MAP + AUTO INFO PANEL -->
           <div class="map-card" style="position:relative;overflow:hidden">
             <div class="map-card-header">
               <div class="card-title">
                 <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                 ATM Xaritasi — Toshkent
               </div>
-              <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">🖱 ATM bosing → bashorat ko'ring</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:11px;color:var(--text3)">ATM ustiga bosing</span>
+                <span id="map-atm-count" style="font-size:11px;color:var(--text3);font-family:var(--mono)">18 ATM</span>
+              </div>
             </div>
 
-            <!-- Map + sliding panel container -->
-            <div style="position:relative;flex:1;display:flex;overflow:hidden;min-height:320px">
-              <div id="map" style="flex:1;transition:flex .35s ease"></div>
+            <div class="map-info-wrap">
+              <!-- Leaflet map -->
+              <div id="map" style="flex:1"></div>
 
-              <!-- ATM Analytics Slide Panel -->
-              <div id="atm-analytics-panel" style="
-                width:0;overflow:hidden;
-                background:var(--bg2);border-left:1px solid var(--border2);
-                display:flex;flex-direction:column;
-                transition:width .35s cubic-bezier(.4,0,.2,1);
-                flex-shrink:0;position:relative;
-              ">
-                <!-- Panel header -->
-                <div id="ap-header" style="padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0">
-                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
-                    <div id="ap-dot" style="width:9px;height:9px;border-radius:50%;background:var(--accent)"></div>
-                    <span id="ap-id" style="font-family:var(--mono);font-size:11px;color:var(--text3)"></span>
-                    <span id="ap-badge" style="margin-left:auto"></span>
-                    <button onclick="closeAnalyticsPanel()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:0 0 0 6px">×</button>
+              <!-- Auto-info side panel -->
+              <div class="map-info-panel" id="map-info-panel">
+
+                <!-- Header: current ATM -->
+                <div class="info-atm-header">
+                  <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">
+                    <div id="info-dot" style="width:9px;height:9px;border-radius:50%;background:var(--accent)"></div>
+                    <span id="info-id" style="font-family:var(--mono);font-size:11px;color:var(--text3)">ATM-001</span>
+                    <span id="info-badge" style="margin-left:auto"></span>
                   </div>
-                  <div id="ap-name" style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+                  <div class="info-atm-title" id="info-name">Chorsu bozori</div>
+                  <div class="info-atm-addr" id="info-addr">Chorsu, Toshkent</div>
                 </div>
 
-                <!-- Cash level bar -->
-                <div style="padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                    <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Naqd daraja</span>
-                    <span id="ap-cash-pct" style="font-family:var(--mono);font-size:16px;font-weight:700"></span>
+                <!-- Cash level -->
+                <div class="info-cash-section">
+                  <div class="info-cash-row">
+                    <span style="font-size:11px;color:var(--text3)">Naqd pul</span>
+                    <span class="info-cash-big" id="info-cash-pct">78%</span>
                   </div>
-                  <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
-                    <div id="ap-cash-bar" style="height:100%;border-radius:3px;transition:width .5s"></div>
+                  <div class="info-bar"><div class="info-bar-fill" id="info-bar"></div></div>
+                  <div class="info-stats">
+                    <div class="info-stat">
+                      <div class="info-stat-label">Qoldiq</div>
+                      <div class="info-stat-val" id="info-balance"></div>
+                    </div>
+                    <div class="info-stat">
+                      <div class="info-stat-label">Tugashga</div>
+                      <div class="info-stat-val" id="info-days"></div>
+                    </div>
+                    <div class="info-stat">
+                      <div class="info-stat-label">Kunlik sarfi</div>
+                      <div class="info-stat-val" id="info-burn"></div>
+                    </div>
+                    <div class="info-stat">
+                      <div class="info-stat-label">Kerak pul</div>
+                      <div class="info-stat-val" id="info-need"></div>
+                    </div>
                   </div>
-                  <div style="display:flex;justify-content:space-between;margin-top:5px">
-                    <span style="font-size:10px;color:var(--text3)">Qoldiq: <span id="ap-balance" style="color:var(--text2)"></span></span>
-                    <span style="font-size:10px;color:var(--text3)">Bashorat: <span id="ap-forecast" style="font-weight:600"></span></span>
-                  </div>
-                </div>
-
-                <!-- Tabs -->
-                <div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0">
-                  <button class="ap-tab active" id="tab-forecast" onclick="switchTab('forecast')">📈 Bashorat</button>
-                  <button class="ap-tab" id="tab-weekly" onclick="switchTab('weekly')">📅 Haftalik</button>
-                  <button class="ap-tab" id="tab-hourly" onclick="switchTab('hourly')">🕐 Soatlik</button>
-                </div>
-
-                <!-- Chart area -->
-                <div style="flex:1;padding:10px;overflow-y:auto;min-width:260px" id="ap-chart-area">
-                  <!-- Forecast tab -->
-                  <div id="tab-content-forecast">
-                    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px">7 kunlik naqd pul bashorati</div>
-                    <canvas id="ap-forecast-chart" height="100"></canvas>
-                    <div id="ap-forecast-alert" style="margin-top:8px;padding:7px 10px;border-radius:7px;font-size:11px;display:none"></div>
-                  </div>
-                  <!-- Weekly tab -->
-                  <div id="tab-content-weekly" style="display:none">
-                    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px">Hafta kunlari bo'yicha tranzaksiyalar</div>
-                    <canvas id="ap-weekly-chart" height="100"></canvas>
-                    <div id="ap-peak-day" style="margin-top:8px;padding:7px 10px;background:rgba(0,229,195,0.07);border:1px solid rgba(0,229,195,.2);border-radius:7px;font-size:11px;color:var(--text2)"></div>
-                  </div>
-                  <!-- Hourly tab -->
-                  <div id="tab-content-hourly" style="display:none">
-                    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px">Kun davomida yuklanish (soatlar)</div>
-                    <canvas id="ap-hourly-chart" height="110"></canvas>
-                    <div id="ap-peak-hour" style="margin-top:8px;padding:7px 10px;background:rgba(0,136,255,0.07);border:1px solid rgba(0,136,255,.2);border-radius:7px;font-size:11px;color:var(--text2)"></div>
+                  <div id="info-urgent" style="display:none" class="urgent-banner">
+                    🚨 TEZROQ TO'LDIRING! Pul tugashiga 1 kun qoldi
                   </div>
                 </div>
 
-                <!-- Inkassatsiya tavsiya -->
-                <div style="padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg3)" id="ap-recommendation"></div>
+                <!-- Route trip (4 ATMs) -->
+                <div class="trip-section">
+                  <div class="trip-label">🛣 Optimal marshrut (shu ATMdan)</div>
+                  <div id="info-trip-cards"></div>
+
+                  <!-- Nav buttons -->
+                  <div class="nav-mini-btns" id="info-nav">
+                    <a class="nav-mini-btn g" id="info-google" href="#" target="_blank">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                      Google Maps
+                    </a>
+                    <a class="nav-mini-btn y" id="info-yandex" href="#" target="_blank">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                      Yandex
+                    </a>
+                  </div>
+
+                  <!-- Mini ATM list -->
+                  <div class="trip-label" style="margin-top:10px">📋 Barcha ATMlar</div>
+                  <div class="atm-mini-list" id="info-atm-list"></div>
+                </div>
               </div>
             </div>
 
             <div class="map-legend">
-              <div class="legend-item"><div class="legend-dot" style="background:#00C4A3"></div>Yetarli naqd</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#FF8C00"></div>Kam naqd</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#FF4B6E"></div>Kritik / Tugagan</div>
-              <div class="legend-item"><div class="legend-dot" style="background:#4A7BA8"></div>Oflayn</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#00C4A3"></div>Yetarli (3+ kun)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#FF8C00"></div>Kam (1–3 kun)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#FF4B6E"></div>🔴 &lt;1 kun — TEZROQ!</div>
             </div>
           </div>
 
@@ -1513,36 +1642,102 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
           </div>
         </div>
       </div>
-
-    </div>
-  </div>
-</div>
+      <!-- sozlamalar-panel ends here, route-panel follows -->
 
 <script>
 // ============ DATA ============
+// ═══════════════════════════════════════════
+// ATM FLOW AI — Core Data & Engine
+// ═══════════════════════════════════════════
+const CAPACITY = 200; // mln so'm — har ATM sig'imi
+
 const atms = [
-  {id:'ATM-001',name:'Chorsu bozori',addr:'Chorsu, Toshkent',lat:41.3111,lng:69.2472,cash:78,balance:156,lastFill:'2025-04-22',forecast:'5 kun',status:'ok'},
-  {id:'ATM-002',name:'Yunusobod 14-kv',addr:"Yunusobod t., Toshkent",lat:41.3624,lng:69.2814,cash:34,balance:68,lastFill:'2025-04-20',forecast:'1.5 kun',status:'warn'},
-  {id:'ATM-003',name:'Mirzo Ulug\'bek metro',addr:"Mirzo Ulug'bek t.",lat:41.3245,lng:69.2156,cash:0,balance:0,lastFill:'2025-04-18',forecast:'Tugagan',status:'danger'},
-  {id:'ATM-004',name:'Navruz savdo markazi',addr:'Shayxontohur, Toshkent',lat:41.2998,lng:69.2401,cash:91,balance:182,lastFill:'2025-04-23',forecast:'7 kun',status:'ok'},
-  {id:'ATM-005',name:'Oybek metro',addr:'Toshkent shahar markazi',lat:41.3032,lng:69.2733,cash:12,balance:24,lastFill:'2025-04-17',forecast:'12 soat',status:'danger'},
-  {id:'ATM-006',name:'Hamza tumanı filiali',addr:"Hamza t., Toshkent",lat:41.2845,lng:69.2889,cash:55,balance:110,lastFill:'2025-04-21',forecast:'3 kun',status:'ok'},
-  {id:'ATM-007',name:'Sergeli tumanı',addr:"Sergeli t., Toshkent",lat:41.2334,lng:69.2012,cash:0,balance:0,lastFill:'2025-04-15',forecast:'Oflayn',status:'offline'},
-  {id:'ATM-008',name:'Chilonzor savdo markazi',addr:'Chilonzor, Toshkent',lat:41.2934,lng:69.2205,cash:67,balance:134,lastFill:'2025-04-22',forecast:'4 kun',status:'ok'},
-  {id:'ATM-009',name:'Beruniy ko\'cha',addr:"Beruniy ko'chasi",lat:41.3401,lng:69.3012,cash:22,balance:44,lastFill:'2025-04-19',forecast:'18 soat',status:'warn'},
-  {id:'ATM-010',name:'Aeroport terminali',addr:"Toshkent Xalqaro Aeroporti",lat:41.2579,lng:69.2822,cash:83,balance:166,lastFill:'2025-04-23',forecast:'6 kun',status:'ok'},
-  {id:'ATM-011',name:'Mustaqillik maydoni',addr:'Toshkent markazi',lat:41.2995,lng:69.2401,cash:41,balance:82,lastFill:'2025-04-20',forecast:'2 kun',status:'warn'},
-  {id:'ATM-012',name:'Bo\'stonliq filiali',addr:"Bo'stonliq t.",lat:41.5123,lng:69.6734,cash:0,balance:0,lastFill:'2025-04-14',forecast:'Tugagan',status:'danger'},
-  {id:'ATM-013',name:'Zangiota filiali',addr:"Zangiota t.",lat:41.1923,lng:69.2145,cash:72,balance:144,lastFill:'2025-04-22',forecast:'5 kun',status:'ok'},
-  {id:'ATM-014',name:'Uchtepa bozori',addr:"Uchtepa t., Toshkent",lat:41.3234,lng:69.1956,cash:29,balance:58,lastFill:'2025-04-19',forecast:'1 kun',status:'warn'},
-  {id:'ATM-015',name:'Olmazor filiali',addr:"Olmazor t., Toshkent",lat:41.3512,lng:69.2123,cash:0,balance:0,lastFill:'2025-04-16',forecast:'Oflayn',status:'offline'},
-  {id:'ATM-016',name:"O'qituvchilar uyi",addr:"Shayxontohur t.",lat:41.3089,lng:69.2678,cash:88,balance:176,lastFill:'2025-04-23',forecast:'7 kun',status:'ok'},
-  {id:'ATM-017',name:'Tinchlik prospekti',addr:"Yunusobod t.",lat:41.3734,lng:69.2945,cash:18,balance:36,lastFill:'2025-04-18',forecast:'20 soat',status:'warn'},
-  {id:'ATM-018',name:'Samarqand darvoza',addr:"Shahar markazi",lat:41.3156,lng:69.2589,cash:61,balance:122,lastFill:'2025-04-21',forecast:'4 kun',status:'ok'},
+  {id:'ATM-001',name:'Chorsu bozori',          addr:'Chorsu ko\'chasi, 1',              lat:41.3108,lng:69.2391, cash:78, dailyBurn:12},
+  {id:'ATM-002',name:'Yunusobod 14-kvartal',   addr:'A.Temur shoh ko\'chasi, 108',      lat:41.3180,lng:69.2510, cash:34, dailyBurn:18},
+  {id:'ATM-003',name:'Mirzo Ulug\'bek metro',  addr:'M.Ulug\'bek ko\'chasi, 1',         lat:41.3220,lng:69.2430, cash:16, dailyBurn:14},
+  {id:'ATM-004',name:'Navruz savdo markazi',   addr:'Shayxontohur, Navruz ko\'chasi',   lat:41.3050,lng:69.2450, cash:91, dailyBurn:10},
+  {id:'ATM-005',name:'Oybek metro',            addr:'Oybek ko\'chasi, 12',              lat:41.3030,lng:69.2680, cash:19, dailyBurn:16},
+  {id:'ATM-006',name:'Hamza tumani filiali',   addr:'Hamza ko\'chasi, 22',              lat:41.2980,lng:69.2550, cash:55, dailyBurn:11},
+  {id:'ATM-007',name:'Pushkin ko\'cha filiali',addr:'Pushkin ko\'chasi, 15',            lat:41.3060,lng:69.2580, cash:22, dailyBurn:13},
+  {id:'ATM-008',name:'Chilonzor savdo',        addr:'Chilonzor ko\'chasi, 8',           lat:41.2960,lng:69.2480, cash:67, dailyBurn:10},
+  {id:'ATM-009',name:'Beruniy ko\'cha',        addr:'Beruniy ko\'chasi, 34',            lat:41.3140,lng:69.2620, cash:28, dailyBurn:15},
+  {id:'ATM-010',name:'Mustaqillik maydoni',    addr:'Mustaqillik maydoni, 4',           lat:41.2990,lng:69.2620, cash:83, dailyBurn:9},
+  {id:'ATM-011',name:'Yunusobod 1-kvartal',    addr:'Yunusobod ko\'chasi, 5',           lat:41.3100,lng:69.2700, cash:41, dailyBurn:17},
+  {id:'ATM-012',name:'Amir Temur xiyoboni',    addr:'Amir Temur ko\'chasi, 1',          lat:41.2960,lng:69.2700, cash:63, dailyBurn:8},
+  {id:'ATM-013',name:'Zangiota filiali',       addr:'Shayxontohur, Zangiota yo\'li',    lat:41.3000,lng:69.2390, cash:72, dailyBurn:10},
+  {id:'ATM-014',name:'Uchtepa bozori',         addr:'Uchtepa ko\'chasi, 12',            lat:41.3080,lng:69.2490, cash:24, dailyBurn:19},
+  {id:'ATM-015',name:'Olmazor filiali',        addr:'Olmazor ko\'chasi, 7',             lat:41.3160,lng:69.2480, cash:47, dailyBurn:12},
+  {id:'ATM-016',name:'O\'qituvchilar uyi',     addr:'Shayxontohur, Navoiy ko\'chasi',   lat:41.3020,lng:69.2560, cash:88, dailyBurn:8},
+  {id:'ATM-017',name:'Tinchlik prospekti',     addr:'Tinchlik prospekti, 22',           lat:41.3200,lng:69.2580, cash:31, dailyBurn:20},
+  {id:'ATM-018',name:'Samarqand darvoza',      addr:'Eski shahar, Navoiy ko\'chasi',    lat:41.3070,lng:69.2640, cash:61, dailyBurn:11},
 ];
 
-const statusColors = {ok:'#00C4A3',warn:'#FF8C00',danger:'#FF4B6E',offline:'#4A7BA8'};
-const statusLabels = {ok:'Yetarli',warn:'Kam naqd',danger:'Kritik',offline:'Oflayn'};
+// Enrich each ATM with computed fields
+atms.forEach(a => {
+  a.balance    = Math.round(a.cash * CAPACITY / 100);       // mln so'm
+  a.daysLeft   = Math.max(0.5, +(a.cash / a.dailyBurn).toFixed(1)); // qancha kun qoldi
+  a.needFill   = Math.round((CAPACITY - a.balance));        // to'ldirishga kerak mln
+  a.lastFill   = '2025-04-' + (10 + Math.floor(a.cash/12));
+  // Status: 1 kun yoki kamroq qolsa → danger; 1-3 kun → warn; 3+ → ok
+  a.status = a.daysLeft <= 1 ? 'danger' : a.daysLeft <= 3 ? 'warn' : 'ok';
+  a.forecast   = a.daysLeft <= 1
+    ? `🔴 ${Math.round(a.daysLeft*24)} soat qoldi!`
+    : a.daysLeft <= 3
+    ? `⚠ ${a.daysLeft} kun qoldi`
+    : `✓ ${a.daysLeft} kun`;
+});
+
+const statusColors = {ok:'#00C4A3', warn:'#FF8C00', danger:'#FF4B6E', offline:'#4A7BA8'};
+const statusLabels = {ok:'Yetarli', warn:'Kam naqd', danger:'🔴 TEZROQ TO\'LDIRING!', offline:'Oflayn'};
+
+// ═══════════════════════════════════════════
+// ROUTE ENGINE — 4 ATM per trip, nearest-first
+// ═══════════════════════════════════════════
+function dist(a, b){
+  return Math.sqrt((a.lat-b.lat)**2 + (a.lng-b.lng)**2);
+}
+
+// Given a primary ATM, find up to 3 nearest ATMs that also need filling (≤5 days)
+function buildTrip(primaryId){
+  const primary = atms.find(a => a.id === primaryId);
+  if(!primary) return [];
+
+  // All ATMs needing fill, sorted by urgency then distance from primary
+  const needFilling = atms
+    .filter(a => a.daysLeft <= 5 && a.id !== primaryId)
+    .sort((a, b) => {
+      const urgencyDiff = a.daysLeft - b.daysLeft; // most urgent first
+      if(Math.abs(urgencyDiff) > 0.5) return urgencyDiff;
+      return dist(a, primary) - dist(b, primary);   // then nearest
+    })
+    .slice(0, 3);
+
+  return [primary, ...needFilling];
+}
+
+// Build all trips: sort all ATMs by urgency, greedily assign trips of 4
+function buildAllTrips(){
+  const sorted = [...atms].filter(a => a.daysLeft <= 7)
+                           .sort((a,b) => a.daysLeft - b.daysLeft);
+  const trips = [];
+  const assigned = new Set();
+
+  for(const primary of sorted){
+    if(assigned.has(primary.id)) continue;
+    const candidates = atms
+      .filter(a => !assigned.has(a.id) && a.daysLeft <= 7 && a.id !== primary.id)
+      .sort((a,b) => {
+        const ud = a.daysLeft - b.daysLeft;
+        return Math.abs(ud) > 0.5 ? ud : dist(a,primary) - dist(b,primary);
+      })
+      .slice(0, 3);
+    const trip = [primary, ...candidates];
+    trip.forEach(a => assigned.add(a.id));
+    trips.push(trip);
+    if(trips.length >= 3) break; // show max 3 trips
+  }
+  return trips;
+}
 
 // ============ LOGIN ============
 function doLogin(){
@@ -1572,6 +1767,7 @@ function showPanel(id, btn){
   if(btn) btn.classList.add('active');
   if(id==='map-panel' && !mapFullInitialized) initMapFull();
   if(id==='atm-list') renderTable(atms);
+  if(id==='route-panel'){ if(!routeInitialized) initRouteMap(); setTimeout(buildRoute,100); }
 }
 function setActive(el){
   document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
@@ -1587,13 +1783,6 @@ function updateDate(){
 }
 
 // ============ MAP (DASHBOARD) ============
-let mapDash;
-function initMap(){
-  mapDash = L.map('map',{zoomControl:true,attributionControl:false}).setView([41.31,69.24],12);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapDash);
-  addMarkers(mapDash, true); // store refs
-}
-
 // Fly to ATM on dashboard map and open analytics panel
 function openATMOnMap(id){
   const atm=atms.find(a=>a.id===id);
@@ -1604,7 +1793,7 @@ function openATMOnMap(id){
   document.querySelector('.sidebar-item').classList.add('active');
   setTimeout(()=>{
     mapDash.flyTo([atm.lat,atm.lng],16,{animate:true,duration:1.2});
-    setTimeout(()=>openAnalyticsPanel(atm),1300);
+    setTimeout(()=>updateInfoPanel(atm),1300);
   },100);
 }
 
@@ -1680,9 +1869,179 @@ function copyModalCoords(){
 }
 
 // ═══════════════════════════════════════════
-// PER-ATM TRANZAKSIYA PROFILI GENERATORI
-// Har ATM uchun deterministik (seed asosida)
+// MARKER ICONS
 // ═══════════════════════════════════════════
+function makeIcon(status, cash){
+  const c = statusColors[status] || '#4A7BA8';
+  const isUrgent = status === 'danger';
+  const pulse = isUrgent ? `animation:urgPulse 1.5s ease infinite;` : '';
+  return L.divIcon({
+    html:`<div style="
+      width:38px;height:38px;border-radius:50%;
+      background:${c};color:white;
+      display:flex;align-items:center;justify-content:center;
+      font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;
+      border:2.5px solid rgba(255,255,255,0.85);
+      box-shadow:0 2px 10px rgba(0,0,0,.4);
+      cursor:pointer;${pulse}
+    ">${cash}%</div>`,
+    className:'', iconSize:[38,38], iconAnchor:[19,19], popupAnchor:[0,-22]
+  });
+}
+
+// ═══════════════════════════════════════════
+// AUTO-INFO PANEL — updates on marker click
+// ═══════════════════════════════════════════
+let activeMarkerId = null;
+const dashMarkers = {};
+
+function updateInfoPanel(atm){
+  activeMarkerId = atm.id;
+  const c = statusColors[atm.status];
+  const isUrgent = atm.daysLeft <= 1;
+
+  // Header
+  document.getElementById('info-dot').style.background = c;
+  document.getElementById('info-id').textContent = atm.id;
+  document.getElementById('info-name').textContent = atm.name;
+  document.getElementById('info-addr').textContent = '📍 ' + atm.addr;
+  document.getElementById('info-badge').innerHTML =
+    `<span style="background:${c}22;color:${c};font-size:10px;padding:2px 8px;border-radius:20px">
+      ${isUrgent ? '🔴 TEZROQ!' : statusLabels[atm.status]}
+    </span>`;
+
+  // Cash
+  document.getElementById('info-cash-pct').textContent = atm.cash + '%';
+  document.getElementById('info-cash-pct').style.color = c;
+  document.getElementById('info-bar').style.cssText =
+    `height:100%;border-radius:5px;width:${atm.cash}%;background:${c};transition:width .5s`;
+  document.getElementById('info-balance').textContent = atm.balance + ' mln';
+  document.getElementById('info-days').textContent   = atm.daysLeft + ' kun';
+  document.getElementById('info-days').style.color   = isUrgent ? 'var(--danger)' : c;
+  document.getElementById('info-burn').textContent   = atm.dailyBurn + '% / kun';
+  document.getElementById('info-need').textContent   = atm.needFill + ' mln';
+
+  // Urgent banner
+  document.getElementById('info-urgent').style.display = isUrgent ? 'flex' : 'none';
+
+  // Nav links
+  document.getElementById('info-google').href =
+    `https://www.google.com/maps/dir/?api=1&destination=${atm.lat},${atm.lng}`;
+  document.getElementById('info-yandex').href =
+    `https://yandex.com/maps/?rtext=~${atm.lat},${atm.lng}&rtt=auto`;
+
+  // Build trip (up to 4 ATMs)
+  const trip = buildTrip(atm.id);
+  renderTripCards(trip);
+
+  // Mini ATM list
+  renderMiniList(atm.id);
+
+  // Highlight marker
+  Object.values(dashMarkers).forEach(m => m.setZIndexOffset(0));
+  if(dashMarkers[atm.id]) dashMarkers[atm.id].setZIndexOffset(100);
+}
+
+function renderTripCards(trip){
+  const c = statusColors;
+  const totalFill = trip.reduce((s, a) => s + a.needFill, 0);
+
+  const html = `
+    <div class="trip-card">
+      <div class="trip-header">
+        <div class="trip-num">🚐</div>
+        <div class="trip-title">${trip.length} ATM · 1 marshrut</div>
+        <div class="trip-total">${totalFill} mln kerak</div>
+      </div>
+      ${trip.map((a,i) => {
+        const urg = a.daysLeft <= 1 ? 'var(--danger)' : a.daysLeft <= 3 ? 'var(--warn)' : 'var(--accent)';
+        return `<div class="trip-atm-row" onclick="updateInfoPanel(atms.find(x=>x.id==='${a.id}'));mapDash.flyTo([${a.lat},${a.lng}],16,{animate:true})" style="cursor:pointer">
+          <div class="trip-order" style="background:${urg}22;color:${urg}">${i+1}</div>
+          <div class="trip-atm-info">
+            <div class="trip-atm-name">${a.name}</div>
+            <div class="trip-atm-days" style="color:${urg}">${a.daysLeft <= 1 ? '🔴 ' : ''}${a.forecast}</div>
+          </div>
+          <div class="trip-atm-fill" style="color:${urg}">${a.needFill} mln</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  document.getElementById('info-trip-cards').innerHTML = html;
+}
+
+function renderMiniList(activeId){
+  const sorted = [...atms].sort((a,b) => a.daysLeft - b.daysLeft);
+  document.getElementById('info-atm-list').innerHTML = sorted.map(a => {
+    const c = statusColors[a.status];
+    const isActive = a.id === activeId;
+    return `<div class="atm-mini-item" onclick="updateInfoPanel(atms.find(x=>x.id==='${a.id}'));mapDash.flyTo([${a.lat},${a.lng}],16,{animate:true})"
+      style="${isActive ? 'background:rgba(0,229,195,.07);border-radius:6px;padding:7px 4px;' : ''}">
+      <div class="atm-mini-dot" style="background:${c}"></div>
+      <div class="atm-mini-name">${a.id} · ${a.name}</div>
+      <div class="atm-mini-pct" style="color:${c}">${a.cash}%</div>
+      <div class="atm-mini-days" style="color:${a.daysLeft<=1?'var(--danger)':a.daysLeft<=3?'var(--warn)':'var(--text3)'}">
+        ${a.daysLeft<=1?'🔴':''} ${a.daysLeft}k
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// MAP INIT
+// ═══════════════════════════════════════════
+let mapDash;
+function initMap(){
+  mapDash = L.map('map',{zoomControl:true, attributionControl:false}).setView([41.307, 69.255], 14);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapDash);
+
+  atms.forEach(atm => {
+    const m = L.marker([atm.lat, atm.lng], {icon: makeIcon(atm.status, atm.cash)})
+      .addTo(mapDash)
+      .on('click', () => {
+        updateInfoPanel(atm);
+        mapDash.setView([atm.lat, atm.lng], 15, {animate:true});
+      });
+    dashMarkers[atm.id] = m;
+  });
+
+  // Auto-show first (most urgent) ATM on load
+  const mostUrgent = [...atms].sort((a,b) => a.daysLeft - b.daysLeft)[0];
+  updateInfoPanel(mostUrgent);
+}
+
+function openATMOnMap(id){
+  const atm = atms.find(a => a.id === id);
+  if(!atm) return;
+  document.getElementById('atm-modal-overlay').classList.remove('open');
+  showPanel('dashboard', null);
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  document.querySelector('.sidebar-item').classList.add('active');
+  setTimeout(() => {
+    mapDash.flyTo([atm.lat, atm.lng], 16, {animate:true, duration:1.2});
+    setTimeout(() => updateInfoPanel(atm), 1300);
+  }, 100);
+}
+
+// ═══════════════════════════════════════════
+// FULL MAP (map-panel)
+// ═══════════════════════════════════════════
+let mapFull, mapFullInitialized = false;
+function initMapFull(){
+  mapFull = L.map('map-full',{zoomControl:true, attributionControl:false}).setView([41.307,69.255],14);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapFull);
+  atms.forEach(atm => {
+    L.marker([atm.lat, atm.lng], {icon: makeIcon(atm.status, atm.cash)})
+      .addTo(mapFull)
+      .bindPopup(`<div style="font-family:'DM Sans',sans-serif;min-width:200px">
+        <b style="color:#E8F4FF">${atm.name}</b><br>
+        <span style="font-size:12px;color:#7BA8D0">${atm.addr}</span><br><br>
+        <span style="color:${statusColors[atm.status]};font-weight:700;font-size:14px">${atm.cash}%</span>
+        <span style="font-size:12px;color:#7BA8D0"> · ${atm.forecast}</span><br>
+        <span style="font-size:11px;color:#4A7BA8">Kerak: ${atm.needFill} mln so'm</span>
+      </div>`, {maxWidth:220});
+  });
+  mapFullInitialized = true;
+  setTimeout(() => mapFull.invalidateSize(), 100);
+}
 
 // Seed-based pseudorandom (ATM ID dan hosil qilish uchun)
 function seededRand(seed){
@@ -1761,224 +2120,7 @@ function genATMProfile(atm){
 // ═══════════════════════════════════════════
 // ANALYTICS PANEL UI
 // ═══════════════════════════════════════════
-let apForecastChart=null, apWeeklyChart=null, apHourlyChart=null;
-let panelOpen=false;
-
-function openAnalyticsPanel(atm){
-  const profile=genATMProfile(atm);
-  const c=statusColors[atm.status];
-  const labels={ok:'✓ Yetarli',warn:'⚠ Kam',danger:'✕ Kritik',offline:'○ Oflayn'};
-
-  // Header
-  document.getElementById('ap-dot').style.background=c;
-  document.getElementById('ap-id').textContent=atm.id;
-  document.getElementById('ap-name').textContent=atm.name;
-  document.getElementById('ap-badge').innerHTML=`<span style="background:${c}22;color:${c};font-size:10px;padding:2px 8px;border-radius:20px">${labels[atm.status]}</span>`;
-
-  // Cash bar
-  document.getElementById('ap-cash-pct').textContent=atm.cash+'%';
-  document.getElementById('ap-cash-pct').style.color=c;
-  document.getElementById('ap-cash-bar').style.cssText=`height:100%;border-radius:3px;width:${atm.cash}%;background:${c};transition:width .5s`;
-  document.getElementById('ap-balance').textContent=atm.balance+' mln so\'m';
-  document.getElementById('ap-forecast').textContent=atm.forecast;
-  document.getElementById('ap-forecast').style.color=c;
-
-  // Inkassatsiya tavsiya
-  const recEl=document.getElementById('ap-recommendation');
-  const isUrgent=atm.status==='danger'||profile.forecast7[0]<20;
-  recEl.innerHTML=`<div style="font-size:11px;color:${isUrgent?'var(--danger)':'var(--accent)'};font-weight:600">${profile.recText}</div>
-    <div style="font-size:10px;color:var(--text3);margin-top:3px">Kunlik yonish: ~${profile.burnRate}% · Eng yuqori kun: ${profile.peakDay}</div>`;
-
-  // Open panel
-  const panel=document.getElementById('atm-analytics-panel');
-  panel.style.width='280px';
-  panelOpen=true;
-
-  // Draw charts with small delay
-  setTimeout(()=>drawAPCharts(atm,profile,c),120);
-
-  // Reset to forecast tab
-  switchTab('forecast');
-}
-
-function closeAnalyticsPanel(){
-  document.getElementById('atm-analytics-panel').style.width='0';
-  panelOpen=false;
-}
-
-function switchTab(tab){
-  ['forecast','weekly','hourly'].forEach(t=>{
-    document.getElementById('tab-content-'+t).style.display=t===tab?'block':'none';
-    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
-  });
-}
-
-const CHART_DEFAULTS={
-  responsive:true,maintainAspectRatio:true,
-  plugins:{legend:{display:false},tooltip:{backgroundColor:'#0D2040',borderColor:'#234870',borderWidth:1,titleColor:'#E8F4FF',bodyColor:'#7BA8D0',padding:8}},
-};
-
-function drawAPCharts(atm,profile,c){
-  // ── Forecast Chart (7 kun) ──
-  const days7=Array.from({length:7},(_,i)=>{
-    const d=new Date();d.setDate(d.getDate()+i);
-    return d.toLocaleDateString('uz-UZ',{weekday:'short',day:'numeric'});
-  });
-  if(apForecastChart){apForecastChart.destroy();apForecastChart=null}
-  const ctx1=document.getElementById('ap-forecast-chart').getContext('2d');
-  const critLine=Array(7).fill(20);
-  apForecastChart=new Chart(ctx1,{
-    type:'line',
-    data:{labels:days7,datasets:[
-      {label:'Naqd %',data:profile.forecast7,
-       borderColor:c,backgroundColor:c+'18',
-       borderWidth:2,tension:0.4,fill:true,pointRadius:4,
-       pointBackgroundColor:profile.forecast7.map(v=>v<20?'#FF4B6E':v<40?'#FF8C00':c),
-       pointBorderColor:'#0D2040',pointBorderWidth:1},
-      {label:'Kritik',data:critLine,borderColor:'#FF4B6E55',borderWidth:1,
-       borderDash:[4,3],pointRadius:0,fill:false},
-    ]},
-    options:{...CHART_DEFAULTS,
-      scales:{
-        x:{grid:{color:'rgba(26,58,92,0.4)'},ticks:{color:'#4A7BA8',font:{size:9},maxRotation:30}},
-        y:{grid:{color:'rgba(26,58,92,0.4)'},ticks:{color:'#4A7BA8',font:{size:9}},min:0,max:100,
-           ticks:{callback:v=>v+'%',color:'#4A7BA8',font:{size:9}}}
-      }
-    }
-  });
-  // Alert
-  const alertEl=document.getElementById('ap-forecast-alert');
-  const emptyDay=profile.forecast7.findIndex(v=>v<20);
-  if(emptyDay!==-1){
-    alertEl.style.display='block';
-    alertEl.style.cssText+=`;background:rgba(255,75,110,0.1);border:1px solid rgba(255,75,110,0.3);color:#FF4B6E`;
-    alertEl.textContent=`⚠ ${days7[emptyDay]} da naqd tugashi kutilmoqda`;
-  } else {
-    alertEl.style.display='none';
-  }
-
-  // ── Weekly Chart ──
-  if(apWeeklyChart){apWeeklyChart.destroy();apWeeklyChart=null}
-  const ctx2=document.getElementById('ap-weekly-chart').getContext('2d');
-  const weekLabels=['Du','Se','Ch','Pa','Ju','Sh','Ya'];
-  const maxW=Math.max(...profile.weekPattern);
-  apWeeklyChart=new Chart(ctx2,{
-    type:'bar',
-    data:{labels:weekLabels,datasets:[{
-      label:'Tranzaksiyalar',
-      data:profile.weekPattern,
-      backgroundColor:profile.weekPattern.map(v=>v===maxW?c+'DD':'#1A3A5C'),
-      borderColor:profile.weekPattern.map(v=>v===maxW?c:'#234870'),
-      borderWidth:1,borderRadius:4,
-    }]},
-    options:{...CHART_DEFAULTS,
-      scales:{
-        x:{grid:{display:false},ticks:{color:'#4A7BA8',font:{size:10}}},
-        y:{grid:{color:'rgba(26,58,92,0.4)'},ticks:{color:'#4A7BA8',font:{size:9}}}
-      }
-    }
-  });
-  document.getElementById('ap-peak-day').innerHTML=
-    `<span style="color:var(--accent)">📊 Eng yuqori:</span> <b style="color:var(--text)">${profile.peakDay}</b> — hafta boshiga nisbatan <b style="color:var(--accent)">${Math.round(maxW/Math.min(...profile.weekPattern)*10)/10}x</b> ko'p tranzaksiya`;
-
-  // ── Hourly Chart ──
-  if(apHourlyChart){apHourlyChart.destroy();apHourlyChart=null}
-  const ctx3=document.getElementById('ap-hourly-chart').getContext('2d');
-  const hourLabels=Array.from({length:24},(_,i)=>i%3===0?(i<10?'0'+i:i)+':00':'');
-  const maxH=Math.max(...profile.hourPattern);
-  apHourlyChart=new Chart(ctx3,{
-    type:'bar',
-    data:{labels:hourLabels,datasets:[{
-      label:'Tranzaksiya',
-      data:profile.hourPattern,
-      backgroundColor:profile.hourPattern.map(v=>v===maxH?'#0088FF':v>maxH*0.7?'#0088FF88':'#1A3A5C'),
-      borderWidth:0,borderRadius:2,
-    }]},
-    options:{...CHART_DEFAULTS,
-      scales:{
-        x:{grid:{display:false},ticks:{color:'#4A7BA8',font:{size:8}}},
-        y:{grid:{color:'rgba(26,58,92,0.3)'},ticks:{color:'#4A7BA8',font:{size:8}}}
-      }
-    }
-  });
-  const ph=profile.peakHour;
-  document.getElementById('ap-peak-hour').innerHTML=
-    `<span style="color:var(--accent2)">🕐 Eng band soat:</span> <b style="color:var(--text)">${ph<10?'0'+ph:ph}:00–${ph+1<10?'0'+(ph+1):ph+1}:00</b> — shu vaqtda inkassatsiya <b style="color:var(--accent2)">qilinmasin</b>`;
-}
-
-// ═══════════════════════════════════════════
-// MARKER + ICON
-// ═══════════════════════════════════════════
-function makeIcon(status){
-  const c=statusColors[status];
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
-    <path d="M16 0C7.2 0 0 7.2 0 16c0 10 16 24 16 24S32 26 32 16C32 7.2 24.8 0 16 0z" fill="${c}" opacity="0.9"/>
-    <circle cx="16" cy="16" r="8" fill="white" opacity="0.25"/>
-    <text x="16" y="21" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="IBM Plex Mono">A</text>
-  </svg>`;
-  return L.divIcon({
-    html:svg,className:'',iconSize:[32,40],iconAnchor:[16,40],popupAnchor:[0,-36]
-  });
-}
-
-function makePopup(atm){
-  const c=statusColors[atm.status];
-  const cashW=atm.cash;
-  const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${atm.lat},${atm.lng}`;
-  const yUrl=`https://yandex.com/maps/?rtext=~${atm.lat},${atm.lng}&rtt=auto`;
-  return `<div style="min-width:220px;font-family:'DM Sans',sans-serif">
-    <div class="popup-header">
-      <span class="popup-id">${atm.id}</span>
-      <span style="background:${c}20;color:${c};font-size:11px;padding:2px 8px;border-radius:20px;margin-left:auto">${statusLabels[atm.status]}</span>
-    </div>
-    <div class="popup-name">${atm.name}</div>
-    <div style="font-size:12px;color:#7BA8D0;margin-bottom:10px">${atm.addr}</div>
-    <div class="popup-row"><span class="popup-label">Naqd daraja</span><span class="popup-val" style="color:${c};font-weight:700">${atm.cash}%</span></div>
-    <div class="popup-row"><span class="popup-label">Qoldiq</span><span class="popup-val">${atm.balance} mln so'm</span></div>
-    <div class="popup-row"><span class="popup-label">Bashorat</span><span class="popup-val">${atm.forecast}</span></div>
-    <div class="popup-row"><span class="popup-label">Oxirgi to'ldirish</span><span class="popup-val">${atm.lastFill}</span></div>
-    <div class="popup-cash-bar" style="margin-bottom:12px"><div class="popup-cash-fill" style="width:${cashW}%;background:${c}"></div></div>
-    <div style="display:flex;gap:6px">
-      <a href="${gUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:#1A73E8;color:white;border-radius:8px;font-size:11px;font-weight:600;text-decoration:none">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-        Google Maps
-      </a>
-      <a href="${yUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 6px;background:#FC3F1D;color:white;border-radius:8px;font-size:11px;font-weight:600;text-decoration:none">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-        Yandex
-      </a>
-      <button onclick="openATMDetail('${atm.id}')" style="padding:7px 10px;background:rgba(0,229,195,0.15);border:1px solid rgba(0,229,195,0.3);border-radius:8px;color:#00E5C3;font-size:11px;font-weight:600;cursor:pointer">
-        Batafsil
-      </button>
-    </div>
-  </div>`;
-}
-
-// Store marker refs for flying to them
-const dashMarkers={};
-function addMarkers(mapObj, store=false){
-  atms.forEach(atm=>{
-    const m=L.marker([atm.lat,atm.lng],{icon:makeIcon(atm.status)}).addTo(mapObj);
-    if(store){
-      // Dashboard map: click → analytics panel (no leaflet popup)
-      m.on('click',()=>openAnalyticsPanel(atm));
-      dashMarkers[atm.id]=m;
-    } else {
-      // Second map (map-full): simple popup only
-      m.bindPopup(makePopup(atm),{maxWidth:280,className:'atm-popup'});
-    }
-  });
-}
-
-// ============ MAP FULL ============
-let mapFull, mapFullInitialized=false;
-function initMapFull(){
-  mapFull = L.map('map-full',{zoomControl:true,attributionControl:false}).setView([41.31,69.24],12);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(mapFull);
-  addMarkers(mapFull);
-  mapFullInitialized=true;
-  setTimeout(()=>mapFull.invalidateSize(),100);
-}
+// ============ CHART ============
 
 // ============ CHART ============
 function initChart(){
@@ -2103,16 +2245,207 @@ window.addEventListener('resize', applyMobileLayout);
 window.addEventListener('load',   applyMobileLayout);
 
 // Analytics panel mobile: update open width
-const _origOpenPanel = openAnalyticsPanel;
-function openAnalyticsPanel(atm){
-  _origOpenPanel(atm);
-  if(isMobile()){
-    // On mobile override width to 100%
-    document.getElementById('atm-analytics-panel').style.width='100%';
+// ============ INIT ============
+// ============ INIT ============
+// ═══════════════════════════════════════════
+// ROUTE ENGINE v2 — Smart Proximity Algorithm
+// ═══════════════════════════════════════════
+const ROUTE_COLORS=['#FF4B6E','#0088FF','#FFB800','#00C4A3'];
+const ROUTE_LABELS=['A','B','C','D'];
+
+function haversineKm(a,b){
+  const R=6371,p1=a.lat*Math.PI/180,p2=b.lat*Math.PI/180;
+  const dp=(b.lat-a.lat)*Math.PI/180,dl=(b.lng-a.lng)*Math.PI/180;
+  const h=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return R*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
+}
+function driveMin(km){return Math.ceil(km/25*60);}
+function getWeekendMultiplier(){
+  const d=new Date().getDay();
+  if(d===5)return{mult:1.4,note:"Bugun Juma — +40% qo\'shimcha pul soling."};
+  if(d===4)return{mult:1.25,note:"Bugun Payshanba — +25% tavsiya."};
+  if(d===6)return{mult:1.5,note:"Bugun Shanba — +50% pul soling!"};
+  if(d===0)return{mult:1.3,note:"Bugun Yakshanba — +30% zaxira qoldiring."};
+  return{mult:1.0,note:null};
+}
+const CENTERS={
+  bank:{lat:41.3060,lng:69.2550,name:"Bank markazi (Shayxontohur)"},
+  chorsu:{lat:41.3108,lng:69.2391,name:"Chorsu filiali"},
+  oybek:{lat:41.3030,lng:69.2680,name:"Oybek metro filiali"},
+  mustaq:{lat:41.2990,lng:69.2620,name:"Mustaqillik filiali"},
+};
+let routeMap=null,routeInitialized=false;
+let routePolylines=[],routeMarkers=[],routeCircles=[];
+
+// SMART ROUTE: eng urgent ATM → 5km ichida ≤4 kun qolganlar → NNT TSP
+function buildSmartRoute(allAtms,radiusKm){
+  const urgent=allAtms.filter(a=>a.daysLeft<=7).sort((a,b)=>a.daysLeft-b.daysLeft);
+  if(!urgent.length)return[];
+  const seed=urgent[0],selected=[seed],used=new Set([seed.id]);
+  urgent.filter(a=>!used.has(a.id))
+    .map(a=>({atm:a,dist:haversineKm(seed,a)}))
+    .filter(({atm,dist})=>dist<=5&&atm.daysLeft<=4)
+    .sort((a,b)=>a.atm.daysLeft-b.atm.daysLeft||a.dist-b.dist)
+    .forEach(({atm})=>{if(selected.length<4&&!used.has(atm.id)){selected.push(atm);used.add(atm.id);}});
+  if(selected.length<4){
+    urgent.filter(a=>!used.has(a.id)&&haversineKm(seed,a)<=radiusKm)
+      .sort((a,b)=>a.daysLeft-b.daysLeft||haversineKm(seed,a)-haversineKm(seed,b))
+      .forEach(a=>{if(selected.length<4){selected.push(a);used.add(a.id);}});
   }
+  if(selected.length>2){
+    const head=selected[0],rem=[...selected.slice(1)],ord=[];let cur=head;
+    while(rem.length){let bI=0,bD=Infinity;rem.forEach((a,i)=>{const d=haversineKm(cur,a);if(d<bD){bD=d;bI=i;}});ord.push(rem[bI]);cur=rem[bI];rem.splice(bI,1);}
+    return[head,...ord];
+  }
+  return selected;
 }
 
-// ============ INIT ============
+function buildRoute(){
+  if(!routeInitialized)initRouteMap();
+  const centerId=document.getElementById("route-center-select").value;
+  const radiusKm=parseInt(document.getElementById("route-radius-select").value)||5;
+  const center=CENTERS[centerId]||CENTERS.bank;
+  const wknd=getWeekendMultiplier();
+  const warnEl=document.getElementById("weekend-warn");
+  if(wknd.note){warnEl.style.display="block";document.getElementById("weekend-warn-text").textContent=wknd.note;}
+  else warnEl.style.display="none";
+  const route=buildSmartRoute(atms,radiusKm);
+  if(!route.length){
+    document.getElementById("route-atm-cards").innerHTML=`<div style="padding:24px;text-align:center;color:var(--text3)">Bu hududda to'ldirishga muhtoj ATM yo'q 🎉</div>`;
+    clearRouteMap();return;
+  }
+  const stops=[center,...route];const legs=[];let totalKm=0,totalMin=0;
+  for(let i=1;i<stops.length;i++){const d=haversineKm(stops[i-1],stops[i]),t=driveMin(d);legs.push({km:+d.toFixed(2),min:t});totalKm+=d;totalMin+=t;}
+  totalKm+=haversineKm(route[route.length-1],center);
+  totalMin+=driveMin(haversineKm(route[route.length-1],center));
+  const totalBase=route.reduce((s,a)=>s+a.needFill,0);
+  const totalWknd=Math.round(totalBase*wknd.mult);
+  document.getElementById("route-summary").innerHTML=`
+    <div class="sum-pill"><div class="sum-pill-val">${route.length}</div><div class="sum-pill-label">ATM</div></div>
+    <div class="sum-pill"><div class="sum-pill-val">${totalKm.toFixed(1)} km</div><div class="sum-pill-label">Jami masofa</div></div>
+    <div class="sum-pill"><div class="sum-pill-val">~${totalMin} min</div><div class="sum-pill-label">Taxminiy vaqt</div></div>
+    <div class="sum-pill"><div class="sum-pill-val">${totalBase} mln</div><div class="sum-pill-label">Asosiy pul</div></div>
+    <div class="sum-pill"><div class="sum-pill-val" style="color:var(--accent3)">${totalWknd} mln</div><div class="sum-pill-label">Dam olish bilan</div></div>`;
+  document.getElementById("route-subtitle").textContent=`${center.name} · ${route[0].name} atrofi · ${radiusKm}km radius`;
+  drawRouteMap(route,center,wknd,legs);renderRouteCards(route,wknd,legs);
+  document.getElementById("route-legend-items").innerHTML=route.map((a,i)=>`
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+      <div style="width:22px;height:22px;border-radius:6px;background:${ROUTE_COLORS[i]};color:white;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center">${ROUTE_LABELS[i]}</div>
+      <span style="font-size:11px;color:var(--text2);flex:1">${a.name}</span>
+      <span style="font-size:10px;font-weight:600;color:${a.daysLeft<=1?"var(--danger)":a.daysLeft<=3?"var(--warn)":"var(--accent)"}">${a.daysLeft}k</span>
+    </div>`).join("");
+}
+
+function clearRouteMap(){
+  [...routeMarkers,...routePolylines,...routeCircles].forEach(l=>{try{routeMap.removeLayer(l);}catch(e){}});
+  routeMarkers=[];routePolylines=[];routeCircles=[];
+}
+function initRouteMap(){
+  routeMap=L.map("route-map",{zoomControl:true,attributionControl:false}).setView([41.307,69.255],14);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{maxZoom:19}).addTo(routeMap);
+  routeInitialized=true;
+}
+
+function drawRouteMap(route,center,wknd,legs){
+  clearRouteMap();
+  atms.forEach(a=>{
+    if(route.find(r=>r.id===a.id)||a.daysLeft>7)return;
+    const dc=a.daysLeft<=1?"#FF4B6E":a.daysLeft<=3?"#FF8C00":"#0088FF";
+    const m=L.circleMarker([a.lat,a.lng],{radius:7,color:dc,fillColor:dc,fillOpacity:.25,weight:1.5}).addTo(routeMap);
+    m.bindTooltip(`${a.name} · ${a.daysLeft} kun`,{sticky:true});routeMarkers.push(m);
+  });
+  const cm=L.marker([center.lat,center.lng],{icon:L.divIcon({html:"<div style=\"width:16px;height:16px;border-radius:50%;background:white;border:3px solid #0088FF;box-shadow:0 0 0 5px rgba(0,136,255,.2)\"></div>",className:"",iconSize:[16,16],iconAnchor:[8,8]})}).addTo(routeMap);
+  cm.bindTooltip("🏦 "+center.name,{permanent:false,direction:"top"});routeMarkers.push(cm);
+  const lls=[[center.lat,center.lng],...route.map(a=>[a.lat,a.lng])];
+  const pl=L.polyline(lls,{color:"#00E5C3",weight:3.5,opacity:.85,dashArray:"12,7"}).addTo(routeMap);
+  routePolylines.push(pl);
+  route.forEach((a,i)=>{
+    const from=i===0?[center.lat,center.lng]:[route[i-1].lat,route[i-1].lng];
+    const mid=[(from[0]+a.lat)/2,(from[1]+a.lng)/2];
+    const lm=L.marker(mid,{icon:L.divIcon({html:`<div style="background:rgba(10,30,61,.88);border:1px solid rgba(0,229,195,.3);color:#00E5C3;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap">${legs[i].km}km · ${legs[i].min}min</div>`,className:"",iconSize:null}),interactive:false,zIndexOffset:-100}).addTo(routeMap);
+    routeMarkers.push(lm);
+  });
+  route.filter(a=>a.daysLeft<=1).forEach(a=>{
+    const c=L.circleMarker([a.lat,a.lng],{radius:28,color:"#FF4B6E",fillColor:"#FF4B6E",fillOpacity:.07,weight:1.5,dashArray:"5,4"}).addTo(routeMap);
+    routeCircles.push(c);
+  });
+  route.forEach((atm,i)=>{
+    const c=ROUTE_COLORS[i],lbl=ROUTE_LABELS[i],fill=Math.round(atm.needFill*wknd.mult);
+    const icon=L.divIcon({html:`<div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 3px 8px rgba(0,0,0,.45))"><div style="min-width:54px;padding:5px 10px;background:${c};color:white;border-radius:10px;border:2.5px solid rgba(255,255,255,.85);text-align:center"><div style="font-size:16px;font-weight:900;line-height:1.1">${lbl}</div><div style="font-size:10px;opacity:.9;margin-top:1px">${fill}m</div></div><div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid ${c}"></div></div>`,className:"",iconSize:[60,52],iconAnchor:[30,52],popupAnchor:[0,-54]});
+    const m=L.marker([atm.lat,atm.lng],{icon,zIndexOffset:500}).addTo(routeMap)
+      .bindPopup(`<div style="font-family:"DM Sans",sans-serif;min-width:220px;padding:4px"><b style="font-size:14px;color:#111">${lbl}. ${atm.name}</b><div style="font-size:12px;color:#666;margin:4px 0 8px">📍 ${atm.addr}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><div style="background:#f8f9fa;border-radius:7px;padding:7px;text-align:center"><div style="font-size:10px;color:#888">Naqd qoldi</div><div style="font-size:18px;font-weight:700;color:${c}">${atm.cash}%</div></div><div style="background:#f8f9fa;border-radius:7px;padding:7px;text-align:center"><div style="font-size:10px;color:#888">Qolgan vaqt</div><div style="font-size:18px;font-weight:700;color:${c}">${atm.daysLeft}k</div></div></div><div style="margin-top:7px;font-size:11px;color:#888">Leg ${i+1}: ${legs[i].km}km · ~${legs[i].min} daqiqa</div></div>`,{maxWidth:260});
+    routeMarkers.push(m);
+  });
+  try{routeMap.fitBounds(L.latLngBounds(lls).pad(.2));}catch(e){}
+  setTimeout(()=>routeMap.invalidateSize(),150);
+}
+
+function renderRouteCards(route,wknd,legs){
+  const html=route.map((atm,i)=>{
+    const c=ROUTE_COLORS[i],lbl=ROUTE_LABELS[i];
+    const fillBase=atm.needFill,fillWknd=Math.round(fillBase*wknd.mult);
+    const isU=atm.daysLeft<=1,isW=atm.daysLeft<=3;
+    const dc=isU?"var(--danger)":isW?"var(--warn)":"var(--accent)";
+    const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${atm.lat},${atm.lng}`;
+    const yUrl=`https://yandex.com/maps/?rtext=~${atm.lat},${atm.lng}&rtt=auto`;
+    return `<div class="route-atm-card ${isU?"urgent":isW?"warn-card":""}">
+      <div class="route-card-top">
+        <div class="route-letter" style="background:${c}">${lbl}</div>
+        <div class="route-card-info">
+          <div class="route-card-name">${atm.name}</div>
+          <div class="route-card-addr">📍 ${atm.addr}</div>
+        </div>
+        <div class="route-card-days" style="color:${dc}">${isU?"🔴":""}${atm.daysLeft} kun</div>
+      </div>
+      <div style="display:flex;gap:12px;padding:7px 14px;background:rgba(0,229,195,.05);border-top:1px solid rgba(0,229,195,.1);border-bottom:1px solid rgba(0,229,195,.1);font-size:11px;color:var(--text3)">
+        <span>📏 <b style="color:var(--text2)">${legs[i].km} km</b></span>
+        <span>⏱ <b style="color:var(--text2)">~${legs[i].min} min</b></span>
+        <span style="margin-left:auto;color:${dc};font-weight:600">${isU?"TEZKOR!":isW?"Shoshilinch":"Rejalashtirilgan"}</span>
+      </div>
+      <div class="route-card-mid">
+        <div class="route-fill-row">
+          <span class="route-fill-label">Quyish kerak</span>
+          <span class="route-fill-amt" style="color:${c}">${fillBase} mln</span>
+        </div>
+        <div class="route-fill-bar"><div class="route-fill-fill" style="width:${atm.cash}%;background:${c}"></div></div>
+        ${wknd.mult>1?`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:7px 10px;background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.25);border-radius:7px"><span style="font-size:11px;color:var(--accent3)">⚠ Dam olish ×${wknd.mult}</span><span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent3)">${fillWknd} mln</span></div>`:""}
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:var(--text3)">
+          <span>Joriy: <b style="color:${c}">${atm.cash}%</b></span>
+          <span>Sig\'im: <b>${CAPACITY} mln</b></span>
+          <span>Kunlik sarfi: <b>${atm.dailyBurn}%</b></span>
+        </div>
+      </div>
+      <div class="route-card-bottom">
+        <a class="route-nav-btn g" href="${gUrl}" target="_blank"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>Google Maps</a>
+        <a class="route-nav-btn y" href="${yUrl}" target="_blank"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>Yandex</a>
+        <button class="route-nav-btn qr-btn" onclick="openQR(\'${atm.id}\',${fillWknd})">📱 QR</button>
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById("route-atm-cards").innerHTML=html;
+}
+
+function openQR(atmId,fillAmt){
+  const atm=atms.find(a=>a.id===atmId);if(!atm)return;
+  document.getElementById("qr-modal").classList.add("open");
+  document.getElementById("qr-title").textContent=atm.name;
+  document.getElementById("qr-sub").textContent=atm.id+" · "+atm.addr;
+  document.getElementById("qr-info").innerHTML=`<div>💰 <b>Quyish kerak:</b> ${fillAmt} mln so'm</div><div>📊 <b>Joriy daraja:</b> ${atm.cash}%</div><div>⏱ <b>Qolgan vaqt:</b> ${atm.daysLeft} kun</div><div>📍 <b>Manzil:</b> ${atm.addr}</div>`;
+  const wrap=document.getElementById("qr-canvas-wrap");
+  wrap.innerHTML="";
+  const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${atm.lat},${atm.lng}`;
+  if(typeof QRCode!=="undefined")new QRCode(wrap,{text:gUrl,width:200,height:200,colorDark:"#0A1E3D",colorLight:"#FFFFFF",correctLevel:QRCode.CorrectLevel.M});
+  else wrap.innerHTML="<div style=\"width:200px;height:200px;background:#1A3A5C;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px\">QR yuklanmadi</div>";
+}
+function closeQR(e){if(e.target===document.getElementById("qr-modal"))document.getElementById("qr-modal").classList.remove("open");}
+function buildCenterSelect(){
+  const sel=document.getElementById("route-center-select");
+  sel.innerHTML=Object.entries(CENTERS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("");
+}
+
+
+// ═══════════════════════════════════════════
+// initDashboard
 function initDashboard(){
   updateDate();
   setInterval(updateDate, 60000);
@@ -2123,9 +2456,9 @@ function initDashboard(){
   buildAlertsPanel();
   buildReportTable();
   initReportCharts();
+  buildCenterSelect();
   document.getElementById('last-sync').textContent = new Date().toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
 }
-
 // ============ BASHORAT PANEL ============
 function buildForecastSelect(){
   const sel=document.getElementById('forecast-atm-select');
@@ -2382,11 +2715,88 @@ function addUser(){
 }
 </script>
 
+      <!-- ══════════════════════════════════
+           MARSHRUT REJASI PANEL
+      ══════════════════════════════════ -->
+      <div class="panel" id="route-panel">
+        <div class="panel-header" style="padding:14px 20px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="dash-title">🛣 Inkassatsiya Marshrutu</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px" id="route-subtitle">5 km radiusda eng zarur 4 ATM</div>
+          </div>
+          <div class="filter-row" style="flex-wrap:wrap">
+            <select class="filter-select" id="route-center-select" onchange="buildRoute()">
+              <option value="bank">🏦 Bank (markazdan)</option>
+            </select>
+            <select class="filter-select" id="route-radius-select" onchange="buildRoute()">
+              <option value="3">3 km radius</option>
+              <option value="5" selected>5 km radius</option>
+              <option value="8">8 km</option>
+              <option value="12">12 km</option>
+            </select>
+            <button class="action-btn" onclick="buildRoute()" style="padding:8px 16px;background:rgba(0,229,195,0.1);border-color:var(--accent);color:var(--accent)">
+              🔄 Yangilash
+            </button>
+          </div>
+        </div>
+
+        <!-- Weekend warning -->
+        <div id="weekend-warn" style="display:none;margin:0 20px 12px;padding:10px 14px;background:rgba(255,184,0,0.1);border:1px solid rgba(255,184,0,0.35);border-radius:10px;font-size:13px;color:var(--accent3)">
+          ⚠️ <b>Dam olish kuni ehtimoli:</b> <span id="weekend-warn-text"></span>
+        </div>
+
+        <!-- Summary strip -->
+        <div id="route-summary" style="display:flex;gap:10px;padding:0 20px 14px;flex-wrap:wrap"></div>
+
+        <!-- Main: map + cards -->
+        <div style="display:flex;flex:1;gap:0;min-height:0;overflow:hidden" id="route-main-wrap">
+
+          <!-- Route map -->
+          <div style="flex:1;position:relative;min-width:0">
+            <div id="route-map" style="width:100%;height:100%;min-height:320px"></div>
+            <!-- Legend overlay -->
+            <div style="position:absolute;bottom:12px;left:12px;z-index:400;background:rgba(10,30,61,0.92);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;gap:5px">
+              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px">Ketmaketlik</div>
+              <div id="route-legend-items"></div>
+            </div>
+          </div>
+
+          <!-- ATM Cards list -->
+          <div style="width:320px;flex-shrink:0;overflow-y:auto;border-left:1px solid var(--border);background:var(--bg2)" id="route-cards-panel">
+            <div style="padding:12px 14px 4px;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600">
+              To'ldirish tartibi
+            </div>
+            <div id="route-atm-cards"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- END PANELS -->
+    </div><!-- end .content -->
+  </div><!-- end .main-layout -->
+</div><!-- end #app -->
+
+<!-- QR CODE MODAL -->
+<div class="qr-modal" id="qr-modal" onclick="closeQR(event)">
+  <div class="qr-box">
+    <div class="qr-box-title" id="qr-title">ATM QR Kodi</div>
+    <div class="qr-box-sub" id="qr-sub">Kamerangizni QR kodga qarating</div>
+    <div id="qr-canvas-wrap"></div>
+    <div class="qr-info" id="qr-info"></div>
+    <button class="qr-close-btn" onclick="document.getElementById('qr-modal').classList.remove('open')">✕ Yopish</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- ============ MOBILE BOTTOM NAV ============ -->
 <div class="mobile-nav" id="mobile-nav">
   <button class="mob-btn active" id="mob-dashboard" onclick="mobNav('dashboard',this)">
     <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 4h2v-2h-2v2zm0-4h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2z"/></svg>
     Bosh
+  </button>
+  <button class="mob-btn" id="mob-route" onclick="mobNav('route-panel',this)">
+    <svg viewBox="0 0 24 24"><path d="M1 5h4v4H1zm8-4h4v4H9zm8 4h4v4h-4zm-8 4h4v4H9zm-8 4h4v4H1zm16 0h4v4h-4zm-8 4h4v4H9zm-8 4h4v4H1zm16 0h4v4h-4z"/></svg>
+    Marshrut
   </button>
   <button class="mob-btn" id="mob-map" onclick="mobNav('map-panel',this)">
     <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
